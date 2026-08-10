@@ -5,8 +5,6 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryBudget.Core", "src\QueryBudget.Core\QueryBudget.Core.csproj", "{A413F52A-15C1-475B-B23A-0D6FE3B4AEFC}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryBudget.EntityFrameworkCore", "src\QueryBudget.EntityFrameworkCore\QueryBudget.EntityFrameworkCore.csproj", "{E725B088-787A-4DFC-9CEC-6A4D679A6A65}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryBudget.UnitTests", "tests\QueryBudget.UnitTests\QueryBudget.UnitTests.csproj", "{DD96105C-6673-4609-8E5D-AA7CEF054515}"
@@ -27,18 +25,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A413F52A-15C1-475B-B23A-0D6FE3B4AEFC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A413F52A-15C1-475B-B23A-0D6FE3B4AEFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A413F52A-15C1-475B-B23A-0D6FE3B4AEFC}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{A413F52A-15C1-475B-B23A-0D6FE3B4AEFC}.Debug|x64.Build.0 = Debug|Any CPU
-		{A413F52A-15C1-475B-B23A-0D6FE3B4AEFC}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{A413F52A-15C1-475B-B23A-0D6FE3B4AEFC}.Debug|x86.Build.0 = Debug|Any CPU
-		{A413F52A-15C1-475B-B23A-0D6FE3B4AEFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A413F52A-15C1-475B-B23A-0D6FE3B4AEFC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A413F52A-15C1-475B-B23A-0D6FE3B4AEFC}.Release|x64.ActiveCfg = Release|Any CPU
-		{A413F52A-15C1-475B-B23A-0D6FE3B4AEFC}.Release|x64.Build.0 = Release|Any CPU
-		{A413F52A-15C1-475B-B23A-0D6FE3B4AEFC}.Release|x86.ActiveCfg = Release|Any CPU
-		{A413F52A-15C1-475B-B23A-0D6FE3B4AEFC}.Release|x86.Build.0 = Release|Any CPU
 		{E725B088-787A-4DFC-9CEC-6A4D679A6A65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E725B088-787A-4DFC-9CEC-6A4D679A6A65}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E725B088-787A-4DFC-9CEC-6A4D679A6A65}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -104,7 +90,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{A413F52A-15C1-475B-B23A-0D6FE3B4AEFC} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{E725B088-787A-4DFC-9CEC-6A4D679A6A65} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{DD96105C-6673-4609-8E5D-AA7CEF054515} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{2677A4D6-E17E-4E08-8E24-373F285D3418} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
