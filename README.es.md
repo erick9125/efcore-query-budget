@@ -2,7 +2,7 @@
 
 [![CI](https://img.shields.io/badge/ci-GitHub%20Actions-blue)](.github/workflows/ci.yml)
 [![NuGet](https://img.shields.io/badge/nuget-ErickMorales.EntityFrameworkCore.QueryBudget-blue)](https://www.nuget.org/packages/ErickMorales.EntityFrameworkCore.QueryBudget)
-[![Target](https://img.shields.io/badge/.NET-9.0-512BD4)](#)
+[![Target](https://img.shields.io/badge/.NET-8.0%20%7C%209.0-512BD4)](#)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 Define y aplica **presupuestos de consultas de base de datos** en tus tests de EF Core.
@@ -97,7 +97,7 @@ Possible N+1 query pattern.
 dotnet add package ErickMorales.EntityFrameworkCore.QueryBudget
 ```
 
-**Requisitos:** .NET 9, EF Core 9. ASP.NET Core es opcional: la librería funciona en tests de servicios y repositorios sin host web.
+**Requisitos:** .NET 8 o .NET 9, con la major de EF Core correspondiente (8.x o 9.x). ASP.NET Core es opcional: la librería funciona en tests de servicios y repositorios sin host web.
 
 ---
 

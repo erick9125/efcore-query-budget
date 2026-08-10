@@ -16,7 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\QueryBudget.Core\QueryBudget.Core.csproj" />
     <ProjectReference Include="..\..\src\QueryBudget.EntityFrameworkCore\QueryBudget.EntityFrameworkCore.csproj" />
   </ItemGroup>
 

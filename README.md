@@ -2,7 +2,7 @@
 
 [![CI](https://img.shields.io/badge/ci-GitHub%20Actions-blue)](.github/workflows/ci.yml)
 [![NuGet](https://img.shields.io/badge/nuget-ErickMorales.EntityFrameworkCore.QueryBudget-blue)](https://www.nuget.org/packages/ErickMorales.EntityFrameworkCore.QueryBudget)
-[![Target](https://img.shields.io/badge/.NET-9.0-512BD4)](#)
+[![Target](https://img.shields.io/badge/.NET-8.0%20%7C%209.0-512BD4)](#)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 Define and enforce **database query budgets** in your EF Core tests.
@@ -97,7 +97,7 @@ It is **not** an APM, dashboard, or production profiler. It is a focused testing
 dotnet add package ErickMorales.EntityFrameworkCore.QueryBudget
 ```
 
-**Requirements:** .NET 9, EF Core 9. ASP.NET Core is optional — the library works in service and repository tests without a web host.
+**Requirements:** .NET 8 or .NET 9, with the matching EF Core major (8.x or 9.x). ASP.NET Core is optional — the library works in service and repository tests without a web host.
 
 ---
 
