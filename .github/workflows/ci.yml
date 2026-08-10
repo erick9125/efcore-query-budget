@@ -1,0 +1,51 @@
+name: ci
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Unit tests
+        run: >
+          dotnet test tests/QueryBudget.UnitTests/QueryBudget.UnitTests.csproj
+          --no-build --configuration Release --verbosity normal
+
+      - name: Concurrency tests
+        run: >
+          dotnet test tests/QueryBudget.ConcurrencyTests/QueryBudget.ConcurrencyTests.csproj
+          --no-build --configuration Release --verbosity normal
+
+      - name: Integration tests
+        run: >
+          dotnet test tests/QueryBudget.IntegrationTests/QueryBudget.IntegrationTests.csproj
+          --no-build --configuration Release --verbosity normal
+
+      - name: Pack
+        run: >
+          dotnet pack src/QueryBudget.EntityFrameworkCore/QueryBudget.EntityFrameworkCore.csproj
+          --configuration Release --output artifacts
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-preview
+          path: |
+            artifacts/*.nupkg
+            artifacts/*.snupkg
