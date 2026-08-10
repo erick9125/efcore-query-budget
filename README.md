@@ -196,6 +196,9 @@ public class OrdersTests
 
     public OrdersTests(AppFactory factory)
     {
+        // TestServer does not flow the caller's execution context into the request pipeline
+        // by default, so the budget would see zero queries. Set this before CreateClient().
+        factory.Server.PreserveExecutionContext = true;
         _client = factory.CreateClient();
     }
 
@@ -218,7 +221,9 @@ public class OrdersTests
 }
 ```
 
-When the HTTP request runs outside the test method’s `AsyncLocal` flow and exactly one budget scope is active, commands are attributed to that sole scope. See [docs/concurrency.md](docs/concurrency.md).
+Commands are attributed strictly by execution flow, so budgets stay correct when tests run in
+parallel or a hosted service touches the database at the same time. `PreserveExecutionContext` is
+what makes that flow reach the request pipeline. See [docs/concurrency.md](docs/concurrency.md).
 
 ### Catch a possible N+1
 

@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### Fixed
+
+- Commands are no longer attributed to a scope on another execution flow. The previous behavior
+  claimed any flow-less command whenever exactly one scope was active process-wide, so a parallel
+  test, a hosted service or a background seed would be counted against the active budget. It is
+  now opt-in as `ScopeAttributionMode.SingleActiveScopeFallback`; the default is `AsyncLocalOnly`.
+  For `WebApplicationFactory`, set `factory.Server.PreserveExecutionContext = true` before creating
+  the client.
+- A second capture of the same command execution is discarded instead of doubling every metric.
+  EF Core invokes an interceptor once per attachment, and a test host that re-registers
+  `AddDbContext` on top of the application's own ends up attaching it twice. The discarded count
+  is reported as `QueryMetrics.DuplicateCaptureCount` and warned about in the report.
+
 ### Breaking
 
 - Removed `QueryBudgetLibraryOptions.SlowQueryThreshold` and

@@ -17,6 +17,12 @@ public sealed record QueryMetrics
 
     public TimeSpan MaximumDuration { get; init; }
 
+    /// <summary>
+    /// Command executions that were captured more than once and discarded. Above zero means the
+    /// interceptor is attached to the <c>DbContext</c> more than once.
+    /// </summary>
+    public int DuplicateCaptureCount { get; init; }
+
     public IReadOnlyList<QueryGroup> ExactDuplicateGroups { get; init; }
         = Array.Empty<QueryGroup>();
 

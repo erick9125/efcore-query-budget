@@ -16,5 +16,11 @@ public sealed record RecordedQuery
 
     public string? ConnectionId { get; init; }
 
+    /// <summary>
+    /// EF Core's correlation id for this command execution. Used to discard a second capture of
+    /// the same execution when the interceptor ends up attached more than once.
+    /// </summary>
+    public Guid CommandId { get; init; }
+
     public DateTimeOffset Timestamp { get; init; }
 }

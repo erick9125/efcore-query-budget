@@ -2,33 +2,32 @@ namespace ErickMorales.EntityFrameworkCore.QueryBudget;
 
 /// <summary>
 /// Isolates query capture per async execution flow using <see cref="AsyncLocal{T}"/>.
-/// When AsyncLocal is empty but exactly one scope is active (typical WebApplicationFactory
-/// HTTP callbacks), queries are attributed to that sole scope.
 /// </summary>
+/// <remarks>
+/// Attribution follows the execution flow by default. The process-wide
+/// <see cref="ScopeAttributionMode.SingleActiveScopeFallback"/> is opt-in because it cannot tell a
+/// command issued by the code under measurement from one issued by anything else in the process.
+/// </remarks>
 public static class QueryBudgetContext
 {
     private static readonly AsyncLocal<QueryScope?> CurrentScope = new();
     private static readonly object Gate = new();
     private static readonly HashSet<QueryScope> ActiveScopes = [];
 
+    /// <summary>
+    /// The scope on the current execution flow, or <see langword="null"/> when there is none.
+    /// </summary>
     public static QueryScope? Current => CurrentScope.Value;
 
-    public static bool HasActiveScope
-    {
-        get
-        {
-            if (CurrentScope.Value is not null)
-            {
-                return true;
-            }
+    /// <summary>
+    /// Whether the current execution flow carries a scope.
+    /// </summary>
+    public static bool HasActiveScope => CurrentScope.Value is not null;
 
-            lock (Gate)
-            {
-                return ActiveScopes.Count > 0;
-            }
-        }
-    }
-
+    /// <summary>
+    /// Starts a scope on the current execution flow. Dispose the result to end it.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">A scope is already active on this flow.</exception>
     public static IDisposable Begin()
     {
         if (CurrentScope.Value is not null)
@@ -48,7 +47,17 @@ public static class QueryBudgetContext
         return new ScopeHandle(scope);
     }
 
+    /// <summary>
+    /// Resolves the scope a command should be attributed to, following the execution flow only.
+    /// </summary>
     public static bool TryGetScope(out QueryScope scope)
+        => TryGetScope(ScopeAttributionMode.AsyncLocalOnly, out scope);
+
+    /// <summary>
+    /// Resolves the scope a command should be attributed to under the given
+    /// <paramref name="mode"/>.
+    /// </summary>
+    public static bool TryGetScope(ScopeAttributionMode mode, out QueryScope scope)
     {
         var local = CurrentScope.Value;
         if (local is not null)
@@ -57,12 +66,15 @@ public static class QueryBudgetContext
             return true;
         }
 
-        lock (Gate)
+        if (mode == ScopeAttributionMode.SingleActiveScopeFallback)
         {
-            if (ActiveScopes.Count == 1)
+            lock (Gate)
             {
-                scope = ActiveScopes.First();
-                return true;
+                if (ActiveScopes.Count == 1)
+                {
+                    scope = ActiveScopes.First();
+                    return true;
+                }
             }
         }
 
@@ -70,14 +82,21 @@ public static class QueryBudgetContext
         return false;
     }
 
+    /// <summary>
+    /// Records a query against the scope on the current execution flow, if any.
+    /// </summary>
     public static void Record(RecordedQuery query)
-    {
-        if (!TryGetScope(out var scope))
-        {
-            return;
-        }
+        => Record(query, ScopeAttributionMode.AsyncLocalOnly);
 
-        scope.Record(query);
+    /// <summary>
+    /// Records a query against the scope resolved under the given <paramref name="mode"/>, if any.
+    /// </summary>
+    public static void Record(RecordedQuery query, ScopeAttributionMode mode)
+    {
+        if (TryGetScope(mode, out var scope))
+        {
+            scope.Record(query);
+        }
     }
 
     private sealed class ScopeHandle : IDisposable

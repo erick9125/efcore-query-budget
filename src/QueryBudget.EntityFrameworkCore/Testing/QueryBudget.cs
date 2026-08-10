@@ -46,7 +46,10 @@ public static class QueryBudget
 
         T value = await action().ConfigureAwait(false);
 
-        var metrics = MetricsCalculator.Calculate(scope.Snapshot(), options);
+        var metrics = MetricsCalculator.Calculate(scope.Snapshot(), options) with
+        {
+            DuplicateCaptureCount = scope.DuplicateCaptureCount
+        };
         var result = Evaluator.Evaluate(options, metrics);
 
         return new QueryBudgetMeasurement<T>

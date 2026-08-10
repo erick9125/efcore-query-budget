@@ -24,6 +24,15 @@ public sealed class DefaultQueryReportFormatter : IQueryReportFormatter
 
         lines.AppendLine();
 
+        if (result.Metrics.DuplicateCaptureCount > 0)
+        {
+            lines.AppendLine(
+                $"Discarded {result.Metrics.DuplicateCaptureCount} duplicate capture(s) of the same command execution. "
+                + "The interceptor is attached to the DbContext more than once — check for a repeated AddInterceptors "
+                + "registration, for example a test host that re-registers AddDbContext on top of the application's own.");
+            lines.AppendLine();
+        }
+
         foreach (var violation in result.Violations)
         {
             lines.AppendLine(violation.Label);

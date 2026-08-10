@@ -147,47 +147,60 @@ public sealed class QueryBudgetCommandInterceptor : DbCommandInterceptor
 
     private void TryRecord(DbCommand command, CommandExecutedEventData eventData)
     {
-        if (!ShouldCapture())
-        {
-            return;
-        }
-
-        QueryBudgetContext.Record(CreateRecordedQuery(
+        TryRecord(
             command,
             eventData.Duration,
-            eventData.Connection?.Database,
-            eventData.ConnectionId.ToString()));
+            eventData.Connection,
+            eventData.ConnectionId,
+            eventData.CommandId);
     }
 
     private void TryRecordFailed(DbCommand command, CommandErrorEventData eventData)
     {
-        if (!ShouldCapture())
+        TryRecord(
+            command,
+            eventData.Duration,
+            eventData.Connection,
+            eventData.ConnectionId,
+            eventData.CommandId);
+    }
+
+    // Resolves the scope exactly once: checking for one and then recording through a second
+    // lookup would take the process-wide lock twice per command and leave a window in which the
+    // scope ends in between.
+    private void TryRecord(
+        DbCommand command,
+        TimeSpan duration,
+        DbConnection? connection,
+        Guid connectionId,
+        Guid commandId)
+    {
+        var settings = _options?.Value;
+        if (settings?.Enabled == false)
         {
             return;
         }
 
-        QueryBudgetContext.Record(CreateRecordedQuery(
-            command,
-            eventData.Duration,
-            eventData.Connection?.Database,
-            eventData.ConnectionId.ToString()));
-    }
-
-    private bool ShouldCapture()
-    {
-        if (_options?.Value.Enabled == false)
+        var mode = settings?.AttributionMode ?? ScopeAttributionMode.AsyncLocalOnly;
+        if (!QueryBudgetContext.TryGetScope(mode, out var scope))
         {
-            return false;
+            return;
         }
 
-        return QueryBudgetContext.HasActiveScope;
+        scope.Record(CreateRecordedQuery(
+            command,
+            duration,
+            connection?.Database,
+            connectionId.ToString(),
+            commandId));
     }
 
     private static RecordedQuery CreateRecordedQuery(
         DbCommand command,
         TimeSpan duration,
         string? database,
-        string? connectionId)
+        string? connectionId,
+        Guid commandId)
     {
         var parameters = new Dictionary<string, object?>(StringComparer.Ordinal);
         foreach (DbParameter parameter in command.Parameters)
@@ -204,6 +217,7 @@ public sealed class QueryBudgetCommandInterceptor : DbCommandInterceptor
             Duration = duration,
             Database = database,
             ConnectionId = connectionId,
+            CommandId = commandId,
             Timestamp = DateTimeOffset.UtcNow
         };
     }

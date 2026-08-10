@@ -16,4 +16,11 @@ public sealed class QueryBudgetLibraryOptions
     /// Prefer leaving this true in tests and disabling explicitly in production hosts.
     /// </summary>
     public bool Enabled { get; set; } = true;
+
+    /// <summary>
+    /// How a captured command is matched to a measurement scope. Defaults to
+    /// <see cref="ScopeAttributionMode.AsyncLocalOnly"/>.
+    /// </summary>
+    public ScopeAttributionMode AttributionMode { get; set; }
+        = ScopeAttributionMode.AsyncLocalOnly;
 }
