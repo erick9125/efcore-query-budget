@@ -1,0 +1,148 @@
+using System.Globalization;
+using ErickMorales.EntityFrameworkCore.QueryBudget;
+using FluentAssertions;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace EfCoreQueryBudget.ConcurrencyTests;
+
+/// <summary>
+/// Pins down whether the execution flow reaches an in-process HTTP pipeline, which is what
+/// decides if <see cref="ScopeAttributionMode.AsyncLocalOnly"/> is usable for endpoint budgets.
+/// </summary>
+public sealed class ExecutionContextFlowTests
+{
+    [Fact]
+    public async Task Preserved_execution_context_attributes_endpoint_queries_to_the_scope()
+    {
+        using var host = new TestHostFixture(preserveExecutionContext: true);
+        using var client = host.Server.CreateClient();
+
+        var measurement = await QueryBudget.MeasureAsync(async () =>
+        {
+            var response = await client.GetAsync("/");
+            response.EnsureSuccessStatusCode();
+        });
+
+        measurement.Metrics.QueryCount.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public async Task Without_preserved_execution_context_endpoint_queries_are_not_attributed()
+    {
+        // This is the gap the process-wide fallback used to paper over: TestServer suppresses the
+        // flow by default, so the request pipeline runs without the caller's AsyncLocal scope.
+        using var host = new TestHostFixture(preserveExecutionContext: false);
+        using var client = host.Server.CreateClient();
+
+        var measurement = await QueryBudget.MeasureAsync(async () =>
+        {
+            var response = await client.GetAsync("/");
+            response.EnsureSuccessStatusCode();
+        });
+
+        measurement.Metrics.QueryCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Unscoped_database_work_never_leaks_into_an_active_budget()
+    {
+        using var host = new TestHostFixture(preserveExecutionContext: true);
+        using var client = host.Server.CreateClient();
+
+        var measurement = await QueryBudget.MeasureAsync(async () =>
+        {
+            var response = await client.GetAsync("/");
+            response.EnsureSuccessStatusCode();
+
+            // A concurrent flow with no scope of its own, as a hosted service or a parallel test
+            // would be. Suppressing the flow reproduces exactly that. The task is started inside
+            // the suppressed region and awaited outside it, because AsyncFlowControl has to be
+            // undone on the thread that created it.
+            Task unscopedWork;
+            using (ExecutionContext.SuppressFlow())
+            {
+                unscopedWork = Task.Run(async () =>
+                {
+                    using var unscoped = host.Server.CreateClient();
+                    for (var i = 0; i < 5; i++)
+                    {
+                        (await unscoped.GetAsync("/")).EnsureSuccessStatusCode();
+                    }
+                });
+            }
+
+            await unscopedWork;
+        });
+
+        // One command for the scoped request; the five unscoped ones must not be counted.
+        measurement.Metrics.QueryCount.Should().Be(1);
+    }
+
+    private sealed class TestHostFixture : IDisposable
+    {
+        private readonly SqliteConnection _connection;
+
+        public TestHostFixture(bool preserveExecutionContext)
+        {
+            _connection = new SqliteConnection(
+                $"Data Source=file:flow-{Guid.NewGuid():N}?mode=memory&cache=shared");
+            _connection.Open();
+
+            var connection = _connection;
+            var builder = new WebHostBuilder()
+                .ConfigureServices(services =>
+                {
+                    services.AddEfCoreQueryBudget();
+                    services.AddDbContext<FlowDbContext>((serviceProvider, options) => options
+                        .UseSqlite(connection)
+                        .AddInterceptors(
+                            serviceProvider.GetRequiredService<QueryBudgetCommandInterceptor>()));
+                })
+                .Configure(app => app.Run(async context =>
+                {
+                    var db = context.RequestServices.GetRequiredService<FlowDbContext>();
+                    var count = await db.Items.CountAsync();
+                    await context.Response.WriteAsync(
+                        count.ToString(CultureInfo.InvariantCulture));
+                }));
+
+            Server = new TestServer(builder)
+            {
+                PreserveExecutionContext = preserveExecutionContext
+            };
+
+            using var scope = Server.Services.CreateScope();
+            scope.ServiceProvider.GetRequiredService<FlowDbContext>()
+                .Database.EnsureCreated();
+        }
+
+        public TestServer Server { get; }
+
+        public void Dispose()
+        {
+            Server.Dispose();
+            _connection.Dispose();
+        }
+    }
+
+    private sealed class Item
+    {
+        public int Id { get; set; }
+    }
+
+    private sealed class FlowDbContext : DbContext
+    {
+        public FlowDbContext(DbContextOptions<FlowDbContext> options)
+            : base(options)
+        {
+        }
+
+        public DbSet<Item> Items => Set<Item>();
+    }
+}

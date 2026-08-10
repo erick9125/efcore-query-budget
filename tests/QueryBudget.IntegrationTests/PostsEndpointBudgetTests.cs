@@ -37,19 +37,13 @@ public sealed class AppFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
     {
-        builder.ConfigureServices(services =>
-        {
-            services.RemoveAll(typeof(DbContextOptions<AppDbContext>));
-            services.RemoveAll(typeof(AppDbContext));
-
-            services.AddDbContext<AppDbContext>((serviceProvider, options) =>
-            {
-                options
-                    .UseNpgsql(_postgres.Container.GetConnectionString())
-                    .AddInterceptors(
-                        serviceProvider.GetRequiredService<QueryBudgetCommandInterceptor>());
-            });
-        });
+        // Point the application's own registration at the container instead of re-registering
+        // AddDbContext on top of it. Removing DbContextOptions<T> does not undo the original
+        // options callback, so a second AddDbContext would attach the interceptor twice and
+        // double every captured command.
+        builder.UseSetting(
+            "ConnectionStrings:Default",
+            _postgres.Container.GetConnectionString());
     }
 }
 
@@ -65,6 +59,11 @@ public sealed class PostsEndpointBudgetTests : IAsyncLifetime
     public PostsEndpointBudgetTests(PostgresFixture postgres)
     {
         _factory = new AppFactory(postgres);
+
+        // TestServer suppresses the execution flow by default, so the request pipeline would run
+        // without the test's measurement scope and every budget would see zero queries.
+        _factory.Server.PreserveExecutionContext = true;
+
         _client = _factory.CreateClient();
     }
 
@@ -97,9 +96,11 @@ public sealed class PostsEndpointBudgetTests : IAsyncLifetime
     public async Task Optimized_endpoint_stays_within_budget()
     {
         await QueryBudget.AssertAsync(
+            // The endpoint issues exactly one joined SELECT. A budget of 4 was calibrated against
+            // double-counted captures and no longer protects anything.
             new QueryBudgetOptions
             {
-                MaxQueries = 4,
+                MaxQueries = 2,
                 MaxExactDuplicates = 0,
                 ScopeLabel = "GET /api/posts/optimized"
             },

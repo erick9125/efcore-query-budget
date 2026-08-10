@@ -196,6 +196,10 @@ public class OrdersTests
 
     public OrdersTests(AppFactory factory)
     {
+        // TestServer no propaga el contexto de ejecución al pipeline de la petición por
+        // defecto, así que el presupuesto vería cero queries. Hay que ponerlo antes de
+        // CreateClient().
+        factory.Server.PreserveExecutionContext = true;
         _client = factory.CreateClient();
     }
 
@@ -218,7 +222,10 @@ public class OrdersTests
 }
 ```
 
-Cuando la petición HTTP se ejecuta fuera del flujo `AsyncLocal` del test y hay exactamente un scope de presupuesto activo, los comandos se atribuyen a ese único scope. Ver [docs/concurrency.md](docs/concurrency.md).
+Los comandos se atribuyen estrictamente por flujo de ejecución, así que los presupuestos siguen
+siendo correctos aunque los tests corran en paralelo o un hosted service toque la base de datos a
+la vez. `PreserveExecutionContext` es lo que hace que ese flujo llegue al pipeline de la petición.
+Ver [docs/concurrency.md](docs/concurrency.md).
 
 ### Detectar un posible N+1
 
