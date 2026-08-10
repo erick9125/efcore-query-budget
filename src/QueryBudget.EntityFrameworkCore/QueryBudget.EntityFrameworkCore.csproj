@@ -5,7 +5,6 @@
     <RootNamespace>ErickMorales.EntityFrameworkCore.QueryBudget</RootNamespace>
     <AssemblyName>ErickMorales.EntityFrameworkCore.QueryBudget</AssemblyName>
     <PackageId>ErickMorales.EntityFrameworkCore.QueryBudget</PackageId>
-    <Version>0.1.0</Version>
     <Description>
       Define and enforce database query budgets in EF Core tests
       to detect query count regressions, duplicates, repeated
