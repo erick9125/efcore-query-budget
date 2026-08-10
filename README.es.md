@@ -109,11 +109,7 @@ dotnet add package ErickMorales.EntityFrameworkCore.QueryBudget
 using ErickMorales.EntityFrameworkCore.QueryBudget;
 using Microsoft.EntityFrameworkCore;
 
-builder.Services.AddEfCoreQueryBudget(options =>
-{
-    options.SlowQueryThreshold = TimeSpan.FromMilliseconds(100);
-    options.ParameterDisplayMode = QueryParameterDisplayMode.Hidden;
-});
+builder.Services.AddEfCoreQueryBudget();
 
 builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
 {
@@ -121,6 +117,17 @@ builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         .UseNpgsql(connectionString)
         .AddInterceptors(
             serviceProvider.GetRequiredService<QueryBudgetCommandInterceptor>());
+});
+```
+
+El registro solo controla la **captura**. Los umbrales y límites viven en `QueryBudgetOptions` y
+se pasan en cada aserción, porque dos presupuestos de una misma suite rara vez quieren los mismos
+números. Aquí la única palanca es `Enabled`:
+
+```csharp
+builder.Services.AddEfCoreQueryBudget(options =>
+{
+    options.Enabled = !builder.Environment.IsProduction();
 });
 ```
 

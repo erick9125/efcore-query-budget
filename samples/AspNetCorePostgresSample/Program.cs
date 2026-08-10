@@ -8,8 +8,9 @@ var connectionString = builder.Configuration.GetConnectionString("Default")
 
 builder.Services.AddEfCoreQueryBudget(options =>
 {
-    options.SlowQueryThreshold = TimeSpan.FromMilliseconds(100);
-    options.ParameterDisplayMode = QueryParameterDisplayMode.Hidden;
+    // Capture is a test and diagnostics concern. Registering the interceptor everywhere but
+    // leaving it inert in production keeps a single composition root.
+    options.Enabled = !builder.Environment.IsProduction();
 });
 
 builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
