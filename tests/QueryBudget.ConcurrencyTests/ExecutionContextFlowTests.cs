@@ -55,28 +55,25 @@ public sealed class ExecutionContextFlowTests
         using var host = new TestHostFixture(preserveExecutionContext: true);
         using var client = host.Server.CreateClient();
 
+        // Started before any scope exists, so its execution flow provably carries none — the same
+        // position a hosted service or a parallel test is in. It is gated so the requests actually
+        // overlap the measured one.
+        var start = new TaskCompletionSource();
+        var unscopedWork = Task.Run(async () =>
+        {
+            await start.Task;
+            using var unscoped = host.Server.CreateClient();
+            for (var i = 0; i < 5; i++)
+            {
+                (await unscoped.GetAsync("/")).EnsureSuccessStatusCode();
+            }
+        });
+
         var measurement = await QueryBudget.MeasureAsync(async () =>
         {
+            start.SetResult();
             var response = await client.GetAsync("/");
             response.EnsureSuccessStatusCode();
-
-            // A concurrent flow with no scope of its own, as a hosted service or a parallel test
-            // would be. Suppressing the flow reproduces exactly that. The task is started inside
-            // the suppressed region and awaited outside it, because AsyncFlowControl has to be
-            // undone on the thread that created it.
-            Task unscopedWork;
-            using (ExecutionContext.SuppressFlow())
-            {
-                unscopedWork = Task.Run(async () =>
-                {
-                    using var unscoped = host.Server.CreateClient();
-                    for (var i = 0; i < 5; i++)
-                    {
-                        (await unscoped.GetAsync("/")).EnsureSuccessStatusCode();
-                    }
-                });
-            }
-
             await unscopedWork;
         });
 

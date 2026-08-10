@@ -24,6 +24,23 @@ unzip -l artifacts/*.nupkg    # lib/net8.0 and lib/net9.0, each with .dll + .xml
 unzip -l artifacts/*.snupkg   # one .pdb per target framework
 ```
 
+## Release
+
+The version comes from the git tag, not from a property in a `.csproj`. MinVer derives it, so the
+package can never disagree with the commit it was built from. Untagged builds are
+`0.0.0-alpha.0.<commit height>`.
+
+```bash
+git tag v1.2.3
+git push origin v1.2.3
+```
+
+That pushes the tag, which triggers `.github/workflows/release.yml`: build, all three test suites,
+pack, a check that every target framework ships its assembly, XML docs and symbols, then
+`dotnet nuget push` and a GitHub release. It needs a `NUGET_API_KEY` repository secret.
+
+Use a prerelease tag (`v1.2.3-rc.1`) to publish a prerelease; NuGet infers that from the version.
+
 ## Guidelines
 
 - Keep budget evaluation pure and free of EF Core dependencies. The `Abstractions/`, `Analysis/`,

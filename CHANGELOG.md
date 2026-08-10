@@ -25,6 +25,10 @@
 
 ### Changed
 
+- The package version now comes from the git tag via MinVer instead of a hardcoded `<Version>`,
+  and a tag push publishes to NuGet through the new release workflow.
+- CI checks formatting, runs the unit suite against both target frameworks, and fails if a packed
+  target framework is missing its assembly, XML documentation or symbols.
 - The package now targets `net8.0` and `net9.0` instead of `net9.0` only.
 - `QueryBudget.Core` was merged into the main assembly. The package previously carried
   `Core.dll` without its XML documentation and without a PDB, so most of the public API had

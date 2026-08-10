@@ -6,50 +6,35 @@ namespace EfCoreQueryBudget.UnitTests;
 public class ScopeAttributionTests
 {
     [Fact]
-    public void AsyncLocalOnly_ignores_commands_from_a_flow_without_a_scope()
+    public async Task AsyncLocalOnly_ignores_commands_from_a_flow_without_a_scope()
     {
-        using var handle = QueryBudgetContext.Begin();
-        var scope = QueryBudgetContext.Current!;
+        var foreign = await ForeignScope.StartAsync();
 
-        RecordFromDetachedFlow(ScopeAttributionMode.AsyncLocalOnly);
+        Record(ScopeAttributionMode.AsyncLocalOnly);
 
-        scope.Snapshot().Should().BeEmpty();
+        (await foreign.EndAsync()).Should().BeEmpty();
     }
 
     [Fact]
-    public void SingleActiveScopeFallback_claims_commands_from_a_flow_without_a_scope()
+    public async Task SingleActiveScopeFallback_claims_commands_from_a_flow_without_a_scope()
     {
-        using var handle = QueryBudgetContext.Begin();
-        var scope = QueryBudgetContext.Current!;
+        var foreign = await ForeignScope.StartAsync();
 
-        RecordFromDetachedFlow(ScopeAttributionMode.SingleActiveScopeFallback);
+        Record(ScopeAttributionMode.SingleActiveScopeFallback);
 
-        scope.Snapshot().Should().ContainSingle();
+        (await foreign.EndAsync()).Should().ContainSingle();
     }
 
     [Fact]
     public async Task SingleActiveScopeFallback_stands_down_when_several_scopes_are_active()
     {
-        var secondScopeStarted = new TaskCompletionSource();
-        var recorded = new TaskCompletionSource();
+        var first = await ForeignScope.StartAsync();
+        var second = await ForeignScope.StartAsync();
 
-        var second = Task.Run(async () =>
-        {
-            using var handle = QueryBudgetContext.Begin();
-            secondScopeStarted.SetResult();
-            await recorded.Task;
-            return QueryBudgetContext.Current!.Snapshot();
-        });
+        Record(ScopeAttributionMode.SingleActiveScopeFallback);
 
-        using var outer = QueryBudgetContext.Begin();
-        var outerScope = QueryBudgetContext.Current!;
-        await secondScopeStarted.Task;
-
-        RecordFromDetachedFlow(ScopeAttributionMode.SingleActiveScopeFallback);
-        recorded.SetResult();
-
-        outerScope.Snapshot().Should().BeEmpty();
-        (await second).Should().BeEmpty();
+        (await first.EndAsync()).Should().BeEmpty();
+        (await second.EndAsync()).Should().BeEmpty();
     }
 
     [Fact]
@@ -59,25 +44,56 @@ public class ScopeAttributionTests
             .Should().Be(ScopeAttributionMode.AsyncLocalOnly);
     }
 
-    /// <summary>
-    /// Records a query from an execution flow that carries no scope, the way a hosted service or
-    /// a parallel test would. The task is started inside the suppressed region and waited on
-    /// outside it, because <see cref="AsyncFlowControl"/> must be undone on its own thread.
-    /// </summary>
-    private static void RecordFromDetachedFlow(ScopeAttributionMode mode)
+    private static void Record(ScopeAttributionMode mode)
     {
-        Task work;
-        using (ExecutionContext.SuppressFlow())
+        QueryBudgetContext.Record(
+            new RecordedQuery
+            {
+                CommandText = "SELECT 1",
+                Timestamp = DateTimeOffset.UtcNow
+            },
+            mode);
+    }
+
+    /// <summary>
+    /// A scope living on its own execution flow. Because <see cref="AsyncLocal{T}"/> changes do not
+    /// propagate back to the parent, the test method's flow provably carries no scope — which is
+    /// the condition under test. Suppressing the flow instead would be non-deterministic: the
+    /// pooled thread keeps whatever execution context it already had.
+    /// </summary>
+    private sealed class ForeignScope
+    {
+        private readonly TaskCompletionSource _release;
+        private readonly Task<IReadOnlyList<RecordedQuery>> _owner;
+
+        private ForeignScope(TaskCompletionSource release, Task<IReadOnlyList<RecordedQuery>> owner)
         {
-            work = Task.Run(() => QueryBudgetContext.Record(
-                new RecordedQuery
-                {
-                    CommandText = "SELECT 1",
-                    Timestamp = DateTimeOffset.UtcNow
-                },
-                mode));
+            _release = release;
+            _owner = owner;
         }
 
-        work.GetAwaiter().GetResult();
+        public static async Task<ForeignScope> StartAsync()
+        {
+            var started = new TaskCompletionSource();
+            var release = new TaskCompletionSource();
+
+            var owner = Task.Run(async () =>
+            {
+                using var handle = QueryBudgetContext.Begin();
+                var scope = QueryBudgetContext.Current!;
+                started.SetResult();
+                await release.Task;
+                return scope.Snapshot();
+            });
+
+            await started.Task;
+            return new ForeignScope(release, owner);
+        }
+
+        public Task<IReadOnlyList<RecordedQuery>> EndAsync()
+        {
+            _release.SetResult();
+            return _owner;
+        }
     }
 }
