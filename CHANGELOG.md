@@ -17,6 +17,19 @@
 
 ### Breaking
 
+- Renamed the package, assembly and root namespace, aligning with the already-published
+  `erick9125.AuditableOperations`. Nothing was released under the old identity, so no consumer is
+  affected.
+
+  | | Before | After |
+  |---|---|---|
+  | Package | `ErickMorales.EntityFrameworkCore.QueryBudget` | `erick9125.EfCoreQueryBudget` |
+  | Assembly, namespace | `ErickMorales.EntityFrameworkCore.QueryBudget` | `EfCoreQueryBudget` |
+
+  This also resolves the type↔namespace collision flagged by CA1724: the `QueryBudget` facade no
+  longer sits inside a namespace of the same name, so call sites keep reading
+  `QueryBudget.AssertAsync(...)` while only the `using` changes.
+
 - Removed `QueryBudgetLibraryOptions.SlowQueryThreshold` and
   `QueryBudgetLibraryOptions.ParameterDisplayMode`. Neither was ever read: the values were
   silently discarded while the README and the sample taught you to set them. Both settings

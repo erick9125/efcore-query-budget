@@ -13,7 +13,7 @@ Integration tests require Docker for Testcontainers PostgreSQL.
 ## Pack
 
 ```bash
-dotnet pack src/QueryBudget.EntityFrameworkCore/QueryBudget.EntityFrameworkCore.csproj -c Release -o artifacts
+dotnet pack src/EfCoreQueryBudget/EfCoreQueryBudget.csproj -c Release -o artifacts
 ```
 
 Inspect the `.nupkg` before publishing. It must contain, for **every** target framework, the

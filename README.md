@@ -1,7 +1,7 @@
 # EF Core Query Budget
 
 [![CI](https://img.shields.io/badge/ci-GitHub%20Actions-blue)](.github/workflows/ci.yml)
-[![NuGet](https://img.shields.io/badge/nuget-ErickMorales.EntityFrameworkCore.QueryBudget-blue)](https://www.nuget.org/packages/ErickMorales.EntityFrameworkCore.QueryBudget)
+[![NuGet](https://img.shields.io/badge/nuget-erick9125.EfCoreQueryBudget-blue)](https://www.nuget.org/packages/erick9125.EfCoreQueryBudget)
 [![Target](https://img.shields.io/badge/.NET-8.0%20%7C%209.0-512BD4)](#)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
@@ -94,7 +94,7 @@ It is **not** an APM, dashboard, or production profiler. It is a focused testing
 ## Install
 
 ```bash
-dotnet add package ErickMorales.EntityFrameworkCore.QueryBudget
+dotnet add package erick9125.EfCoreQueryBudget
 ```
 
 **Requirements:** .NET 8 or .NET 9, with the matching EF Core major (8.x or 9.x). ASP.NET Core is optional — the library works in service and repository tests without a web host.
@@ -106,7 +106,7 @@ dotnet add package ErickMorales.EntityFrameworkCore.QueryBudget
 ### 1. Register the interceptor
 
 ```csharp
-using ErickMorales.EntityFrameworkCore.QueryBudget;
+using EfCoreQueryBudget;
 using Microsoft.EntityFrameworkCore;
 
 builder.Services.AddEfCoreQueryBudget();
@@ -134,7 +134,7 @@ builder.Services.AddEfCoreQueryBudget(options =>
 ### 2. Assert a budget in a test
 
 ```csharp
-using ErickMorales.EntityFrameworkCore.QueryBudget;
+using EfCoreQueryBudget;
 
 await QueryBudget.AssertAsync(
     new QueryBudgetOptions
@@ -242,7 +242,7 @@ var posts = await context.Posts
     .ToListAsync();
 ```
 
-A budget like `MaxQueries = 4` / `MaxRepeatedPatterns = 0` fails the problematic path and passes the optimized one. The sample app under `samples/AspNetCorePostgresSample` demonstrates both endpoints.
+A budget like `MaxQueries = 4` / `MaxRepeatedPatterns = 0` fails the problematic path and passes the optimized one. The sample app under `samples/AspNetCorePostgres` demonstrates both endpoints.
 
 ---
 
