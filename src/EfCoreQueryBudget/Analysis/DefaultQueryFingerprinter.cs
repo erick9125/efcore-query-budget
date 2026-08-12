@@ -7,17 +7,29 @@ namespace EfCoreQueryBudget;
 
 public sealed class DefaultQueryFingerprinter : IQueryFingerprinter
 {
-    private readonly ISqlNormalizer _normalizer;
+    private readonly ISqlNormalizer _structuralNormalizer;
+    private readonly ISqlNormalizer _exactNormalizer;
 
-    public DefaultQueryFingerprinter(ISqlNormalizer? normalizer = null)
+    /// <param name="structuralNormalizer">
+    /// Normalizes SQL for pattern grouping. This is where literal masking belongs.
+    /// </param>
+    /// <param name="exactNormalizer">
+    /// Normalizes SQL for exact-duplicate grouping. Masking literals here would report
+    /// <c>WHERE id = 1</c> and <c>WHERE id = 2</c> as the same query, so callers pass a
+    /// whitespace-only normalizer.
+    /// </param>
+    public DefaultQueryFingerprinter(
+        ISqlNormalizer? structuralNormalizer = null,
+        ISqlNormalizer? exactNormalizer = null)
     {
-        _normalizer = normalizer ?? new DefaultSqlNormalizer();
+        _structuralNormalizer = structuralNormalizer ?? new DefaultSqlNormalizer();
+        _exactNormalizer = exactNormalizer ?? new DefaultSqlNormalizer();
     }
 
     public string StructuralFingerprint(RecordedQuery query)
     {
         ArgumentNullException.ThrowIfNull(query);
-        return Hash(_normalizer.Normalize(query.CommandText));
+        return Hash(_structuralNormalizer.Normalize(query.CommandText));
     }
 
     public string ExactFingerprint(RecordedQuery query)
@@ -25,15 +37,10 @@ public sealed class DefaultQueryFingerprinter : IQueryFingerprinter
         ArgumentNullException.ThrowIfNull(query);
         var payload = JsonSerializer.Serialize(new
         {
-            sql = _normalizer.Normalize(query.CommandText),
+            sql = _exactNormalizer.Normalize(query.CommandText),
             parameters = ParameterNormalizer.Normalize(query.Parameters)
         });
         return Hash(payload);
-    }
-
-    public static string ParameterSetKey(IReadOnlyDictionary<string, object?> parameters)
-    {
-        return Hash(JsonSerializer.Serialize(ParameterNormalizer.Normalize(parameters)));
     }
 
     private static string Hash(string value)

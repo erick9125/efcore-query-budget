@@ -81,9 +81,9 @@ public sealed class DefaultQueryReportFormatter : IQueryReportFormatter
             lines.AppendLine(title);
             lines.AppendLine(Truncate(group.NormalizedSql, MaxSqlLength));
             lines.AppendLine($"Executions: {group.ExecutionCount}");
-            lines.AppendLine($"Distinct parameter sets: {group.DistinctParameterSetCount}");
+            lines.AppendLine($"Distinct variants: {group.DistinctVariantCount}");
 
-            if (possibleNPlusOne && group.DistinctParameterSetCount > 1)
+            if (possibleNPlusOne && group.DistinctVariantCount > 1)
             {
                 lines.AppendLine();
                 lines.AppendLine("Possible N+1 query pattern.");

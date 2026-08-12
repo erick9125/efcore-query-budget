@@ -2,15 +2,15 @@ namespace EfCoreQueryBudget;
 
 public sealed class QueryMetricsCalculator
 {
-    private readonly ExactDuplicateDetector _exactDuplicateDetector;
-    private readonly RepeatedPatternDetector _repeatedPatternDetector;
+    private readonly ExactDuplicateDetector? _injectedExactDuplicateDetector;
+    private readonly RepeatedPatternDetector? _injectedRepeatedPatternDetector;
 
     public QueryMetricsCalculator(
         ExactDuplicateDetector? exactDuplicateDetector = null,
         RepeatedPatternDetector? repeatedPatternDetector = null)
     {
-        _exactDuplicateDetector = exactDuplicateDetector ?? new ExactDuplicateDetector();
-        _repeatedPatternDetector = repeatedPatternDetector ?? new RepeatedPatternDetector();
+        _injectedExactDuplicateDetector = exactDuplicateDetector;
+        _injectedRepeatedPatternDetector = repeatedPatternDetector;
     }
 
     public QueryMetrics Calculate(
@@ -19,8 +19,16 @@ public sealed class QueryMetricsCalculator
     {
         options ??= new QueryBudgetOptions();
 
-        var exactDuplicateGroups = _exactDuplicateDetector.Detect(queries);
-        var repeatedPatternGroups = _repeatedPatternDetector.Detect(
+        // The pattern detector depends on the normalization mode, which only arrives with the
+        // options, so it is composed per call. An injected detector wins over the option.
+        var repeatedPatternDetector = _injectedRepeatedPatternDetector
+            ?? new RepeatedPatternDetector(new DefaultSqlNormalizer(options.SqlNormalization));
+
+        // Exact duplicates never mask: two queries differing in a literal are not the same query.
+        var exactDuplicateDetector = _injectedExactDuplicateDetector ?? new ExactDuplicateDetector();
+
+        var exactDuplicateGroups = exactDuplicateDetector.Detect(queries);
+        var repeatedPatternGroups = repeatedPatternDetector.Detect(
             queries,
             options.RepeatedPatternThreshold);
 

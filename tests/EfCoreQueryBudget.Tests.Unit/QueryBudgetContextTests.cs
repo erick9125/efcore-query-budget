@@ -137,7 +137,7 @@ public class QueryBudgetApiTests
             metrics);
 
         var report = new DefaultQueryReportFormatter().Format(result);
-        report.Should().Contain("Distinct parameter sets: 5");
+        report.Should().Contain("Distinct variants: 5");
         report.Should().Contain("Possible N+1 query pattern");
         report.Should().NotContain("@example.com");
         report.Should().Contain("Parameter values are hidden");

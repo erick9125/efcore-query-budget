@@ -4,7 +4,7 @@ Default display mode: `Hidden`.
 
 | Mode | Behavior |
 |---|---|
-| `Hidden` | Counts only (`Distinct parameter sets`) |
+| `Hidden` | Counts only (`Distinct variants`) |
 | `TypesOnly` | Parameter names and CLR types |
 | `Full` | Values (local diagnostics only) |
 

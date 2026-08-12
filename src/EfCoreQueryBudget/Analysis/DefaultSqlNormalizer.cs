@@ -3,14 +3,25 @@ using System.Text.RegularExpressions;
 namespace EfCoreQueryBudget;
 
 /// <summary>
-/// Conservative SQL normalizer: trim and collapse whitespace only.
+/// SQL normalizer. Trims and collapses whitespace, and optionally masks inline literals so that
+/// executions differing only in a literal share one structural fingerprint.
 /// </summary>
 public sealed partial class DefaultSqlNormalizer : ISqlNormalizer
 {
+    private readonly SqlNormalizationMode _mode;
+
+    public DefaultSqlNormalizer(SqlNormalizationMode mode = SqlNormalizationMode.WhitespaceOnly)
+    {
+        _mode = mode;
+    }
+
     public string Normalize(string sql)
     {
         ArgumentNullException.ThrowIfNull(sql);
-        return WhitespaceRegex().Replace(sql.Trim(), " ");
+
+        return _mode == SqlNormalizationMode.MaskLiterals
+            ? SqlLiteralMasker.Mask(sql)
+            : WhitespaceRegex().Replace(sql.Trim(), " ");
     }
 
     [GeneratedRegex(@"\s+", RegexOptions.CultureInvariant)]
