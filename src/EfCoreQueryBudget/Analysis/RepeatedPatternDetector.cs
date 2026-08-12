@@ -60,6 +60,8 @@ public sealed class RepeatedPatternDetector
                     Fingerprint = pair.Key,
                     NormalizedSql = _normalizer.Normalize(pair.Value[0].CommandText),
                     ExecutionCount = pair.Value.Count,
+                    // Every query in the group shares a fingerprint, so they share an operation.
+                    Operation = SqlOperationClassifier.Classify(pair.Value[0].CommandText),
                     DistinctVariantCount = variants,
                     Queries = pair.Value
                 };

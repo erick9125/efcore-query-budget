@@ -31,6 +31,8 @@ public sealed class ExactDuplicateDetector
                 Fingerprint = g.Fingerprint,
                 NormalizedSql = _normalizer.Normalize(g.Queries[0].CommandText),
                 ExecutionCount = g.Queries.Count,
+                // Every query in the group shares a fingerprint, so they share an operation.
+                Operation = SqlOperationClassifier.Classify(g.Queries[0].CommandText),
                 DistinctVariantCount = 1,
                 Queries = g.Queries
             })

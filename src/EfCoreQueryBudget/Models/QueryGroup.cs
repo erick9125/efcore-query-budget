@@ -12,6 +12,12 @@ public sealed record QueryGroup
     public int ExecutionCount { get; init; }
 
     /// <summary>
+    /// What the group's queries do. Only <see cref="QueryOperation.Read"/> groups count against
+    /// duplicate and pattern budgets — repeating a write is not redundant by itself.
+    /// </summary>
+    public QueryOperation Operation { get; init; }
+
+    /// <summary>
     /// How many distinct queries the group holds once literals and parameter values are taken into
     /// account. A group of many executions with more than one variant is the N+1 shape; a group
     /// with a single variant is a repeated identical query.

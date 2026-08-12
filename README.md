@@ -256,6 +256,7 @@ new QueryBudgetOptions
     MaxQueries = 5,
     MaxExactDuplicates = 0,
     MaxRepeatedPatterns = 1,
+    MaxExecutionsPerPattern = 10,
     MaxSlowQueries = 0,
     MaxTotalDuration = TimeSpan.FromMilliseconds(150),
     MaxSingleQueryDuration = TimeSpan.FromMilliseconds(80),
@@ -272,7 +273,8 @@ new QueryBudgetOptions
 |---|---|
 | `MaxQueries` | Maximum commands in the scope |
 | `MaxExactDuplicates` | Maximum redundant exact executions |
-| `MaxRepeatedPatterns` | Maximum repeated-pattern groups |
+| `MaxRepeatedPatterns` | Maximum repeated-pattern groups — how many places |
+| `MaxExecutionsPerPattern` | Executions in the largest pattern — how big the worst one is |
 | `MaxSlowQueries` | Maximum commands ≥ `SlowQueryThreshold` |
 | `MaxTotalDuration` | Sum of command durations |
 | `MaxSingleQueryDuration` | Worst single command |
@@ -325,13 +327,34 @@ carries meaning collapses too, so `LIMIT 10` and `LIMIT 20` become one pattern. 
 | Metric | Meaning |
 |---|---|
 | `QueryCount` | Commands attributed to the scope |
-| `ExactDuplicateCount` | Redundant exact executions |
-| `RepeatedPatternCount` | Repeated-pattern groups |
+| `ExactDuplicateCount` | Redundant exact read executions |
+| `RepeatedPatternCount` | Repeated read-pattern groups |
+| `MaximumPatternExecutions` | Executions in the largest repeated read pattern |
 | `SlowQueryCount` | Commands at or above the slow threshold |
 | `TotalDuration` | Sum of command durations |
 | `MaximumDuration` | Slowest single command |
-| `ExactDuplicateGroups` | Grouped exact duplicates |
-| `RepeatedPatternGroups` | Grouped structural patterns |
+| `ExactDuplicateGroups` | Grouped exact duplicates, each tagged with its `Operation` |
+| `RepeatedPatternGroups` | Grouped structural patterns, each tagged with its `Operation` |
+
+### Reads and writes
+
+Duplicate and pattern budgets apply to **reads only**. Running the same `SELECT` with the same
+parameters twice returns the same rows, so the second execution is provably wasted. Running the same
+`INSERT` twice is not: it adds two rows, and `UPDATE counters SET n = n + 1` applied twice counts
+twice. A `SaveChanges` over 50 new entities emits 50 executions of one `INSERT` shape — the exact
+signature of an N+1, and not a defect.
+
+So writes and everything that is neither a read nor a write (session settings, transaction control,
+DDL) stay out of `ExactDuplicateCount` and `RepeatedPatternCount`. They are still detected and still
+shown, under their own heading and never labelled a possible N+1:
+
+```text
+Repeated write (not counted against the budget)
+INSERT INTO posts (title) VALUES (@p)
+Executions: 50
+```
+
+Every group carries `QueryGroup.Operation`, so you can apply your own rule if you need one.
 
 ---
 

@@ -41,6 +41,16 @@ public sealed class QueryBudgetEvaluator
                 "Repeated query patterns"));
         }
 
+        if (budget.MaxExecutionsPerPattern is int maxPerPattern
+            && metrics.MaximumPatternExecutions > maxPerPattern)
+        {
+            violations.Add(new QueryBudgetViolation(
+                QueryBudgetViolationType.PatternExecutionsExceeded,
+                maxPerPattern,
+                metrics.MaximumPatternExecutions,
+                "Executions in a single pattern"));
+        }
+
         if (budget.MaxSlowQueries is int maxSlow && metrics.SlowQueryCount > maxSlow)
         {
             violations.Add(new QueryBudgetViolation(

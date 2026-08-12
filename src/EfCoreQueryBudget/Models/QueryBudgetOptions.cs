@@ -10,7 +10,17 @@ public sealed record QueryBudgetOptions
 
     public int? MaxExactDuplicates { get; init; }
 
+    /// <summary>
+    /// How many distinct read patterns may repeat. This is a count of groups, so it says nothing
+    /// about their size — pair it with <see cref="MaxExecutionsPerPattern"/>.
+    /// </summary>
     public int? MaxRepeatedPatterns { get; init; }
+
+    /// <summary>
+    /// How many executions the largest repeated read pattern may have. Bounds the size of an N+1
+    /// rather than the number of places one appears.
+    /// </summary>
+    public int? MaxExecutionsPerPattern { get; init; }
 
     public int? MaxSlowQueries { get; init; }
 

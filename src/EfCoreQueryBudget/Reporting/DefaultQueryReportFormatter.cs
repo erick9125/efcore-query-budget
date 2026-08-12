@@ -54,14 +54,30 @@ public sealed class DefaultQueryReportFormatter : IQueryReportFormatter
         AppendGroups(
             lines,
             "Repeated query pattern",
-            result.Metrics.RepeatedPatternGroups,
+            Reads(result.Metrics.RepeatedPatternGroups),
             possibleNPlusOne: true,
             result.Budget.ParameterDisplayMode);
 
         AppendGroups(
             lines,
             "Repeated exact query",
-            result.Metrics.ExactDuplicateGroups,
+            Reads(result.Metrics.ExactDuplicateGroups),
+            possibleNPlusOne: false,
+            result.Budget.ParameterDisplayMode);
+
+        // Writes are shown but never called an N+1: a bulk insert has the same shape as one and is
+        // not a defect. They do not count against the budget either.
+        AppendGroups(
+            lines,
+            "Repeated write (not counted against the budget)",
+            NonReads(result.Metrics.RepeatedPatternGroups),
+            possibleNPlusOne: false,
+            result.Budget.ParameterDisplayMode);
+
+        AppendGroups(
+            lines,
+            "Repeated exact write (not counted against the budget)",
+            NonReads(result.Metrics.ExactDuplicateGroups),
             possibleNPlusOne: false,
             result.Budget.ParameterDisplayMode);
 
@@ -73,6 +89,12 @@ public sealed class DefaultQueryReportFormatter : IQueryReportFormatter
 
         return lines.ToString().TrimEnd();
     }
+
+    private static QueryGroup[] Reads(IReadOnlyList<QueryGroup> groups)
+        => groups.Where(g => g.Operation == QueryOperation.Read).ToArray();
+
+    private static QueryGroup[] NonReads(IReadOnlyList<QueryGroup> groups)
+        => groups.Where(g => g.Operation != QueryOperation.Read).ToArray();
 
     private static void AppendGroups(
         StringBuilder lines,
