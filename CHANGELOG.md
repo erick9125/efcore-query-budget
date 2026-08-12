@@ -4,6 +4,11 @@
 
 ### Added
 
+- `QueryBudgetOptions.MaxExecutionsPerPattern` bounds the largest repeated pattern, reported as
+  `QueryMetrics.MaximumPatternExecutions`. `MaxRepeatedPatterns` counts groups, so five executions
+  in one place and five thousand in another both counted as one; the size of an N+1, which is what
+  it costs, could not be limited at all.
+- `QueryGroup.Operation` says whether a group reads, writes, or does neither.
 - `QueryBudgetOptions.MaxRecordedQueries` caps how many queries a scope retains for analysis
   (default `10_000`, `null` for no limit). A long-running scope no longer grows without bound.
   Retention is never cut silently: the number dropped is reported as
@@ -20,6 +25,10 @@
 
 ### Fixed
 
+- A bulk insert is no longer reported as a possible N+1. `SaveChanges` over 50 new entities emits 50
+  executions of one `INSERT` shape with different values, which is the exact signature the pattern
+  detector looked for, so any test writing more than a handful of rows triggered the library's
+  headline warning on normal work.
 - Parameter values are no longer held by reference for the life of the scope. They are projected at
   capture time into an immutable `ParameterSnapshot`, so a large payload is not pinned, personal
   data does not outlive the command that used it, and a mutable value can no longer change between
@@ -44,6 +53,10 @@
 
 ### Breaking
 
+- `ExactDuplicateCount` and `RepeatedPatternCount` count reads only. Repeating a read with the same
+  parameters is provably redundant; repeating a write is not, so the library no longer claims it is.
+  Writes and commands that are neither still appear in `ExactDuplicateGroups` and
+  `RepeatedPatternGroups`, tagged with their `Operation`, and in the report under their own heading.
 - Captured parameter values may now arrive as `ParameterSnapshot` rather than as the original
   object. Code reading `RecordedQuery.Parameters` from a captured command should handle it; values
   put there by hand are untouched, and immutable scalars and short strings are still stored as

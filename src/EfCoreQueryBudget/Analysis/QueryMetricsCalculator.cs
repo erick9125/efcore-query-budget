@@ -40,7 +40,17 @@ public sealed class QueryMetricsCalculator
             queries,
             options.RepeatedPatternThreshold);
 
-        var exactDuplicateCount = exactDuplicateGroups.Sum(g => g.ExecutionCount - 1);
+        // Only reads reach the budget. Repeating a read with the same parameters returns the same
+        // rows, so the extra execution is provably wasted; repeating a write is not — two identical
+        // inserts add two rows. Writes stay in the groups below so the report can still show them.
+        var exactDuplicateCount = exactDuplicateGroups
+            .Where(g => g.Operation == QueryOperation.Read)
+            .Sum(g => g.ExecutionCount - 1);
+
+        var readPatternGroups = repeatedPatternGroups
+            .Where(g => g.Operation == QueryOperation.Read)
+            .ToArray();
+
         var totalDuration = TimeSpan.Zero;
         var maximumDuration = TimeSpan.Zero;
         var slowQueryCount = 0;
@@ -63,7 +73,10 @@ public sealed class QueryMetricsCalculator
         {
             QueryCount = totals?.ExecutionCount ?? queries.Count,
             ExactDuplicateCount = exactDuplicateCount,
-            RepeatedPatternCount = repeatedPatternGroups.Count,
+            RepeatedPatternCount = readPatternGroups.Length,
+            MaximumPatternExecutions = readPatternGroups.Length == 0
+                ? 0
+                : readPatternGroups.Max(g => g.ExecutionCount),
             SlowQueryCount = totals?.SlowQueryCount ?? slowQueryCount,
             TotalDuration = totals?.TotalDuration ?? totalDuration,
             MaximumDuration = totals?.MaximumDuration ?? maximumDuration,

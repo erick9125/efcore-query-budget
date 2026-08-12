@@ -7,9 +7,23 @@ public sealed record QueryMetrics
 {
     public int QueryCount { get; init; }
 
+    /// <summary>
+    /// Redundant executions of a read: the same SQL with the same parameter values, returning rows
+    /// the caller already had. Writes are excluded — repeating one is not redundant by itself.
+    /// </summary>
     public int ExactDuplicateCount { get; init; }
 
+    /// <summary>
+    /// How many read patterns repeated. Answers "how many places", not "how big" — see
+    /// <see cref="MaximumPatternExecutions"/> for that.
+    /// </summary>
     public int RepeatedPatternCount { get; init; }
+
+    /// <summary>
+    /// Executions in the largest repeated read pattern, or zero when there is none. A single group
+    /// of 5000 executions and one of 5 both count as one pattern, so this is what tells them apart.
+    /// </summary>
+    public int MaximumPatternExecutions { get; init; }
 
     public int SlowQueryCount { get; init; }
 

@@ -258,6 +258,7 @@ new QueryBudgetOptions
     MaxQueries = 5,
     MaxExactDuplicates = 0,
     MaxRepeatedPatterns = 1,
+    MaxExecutionsPerPattern = 10,
     MaxSlowQueries = 0,
     MaxTotalDuration = TimeSpan.FromMilliseconds(150),
     MaxSingleQueryDuration = TimeSpan.FromMilliseconds(80),
@@ -274,7 +275,8 @@ new QueryBudgetOptions
 |---|---|
 | `MaxQueries` | Máximo de comandos en el scope |
 | `MaxExactDuplicates` | Máximo de ejecuciones exactas redundantes |
-| `MaxRepeatedPatterns` | Máximo de grupos de patrón repetido |
+| `MaxRepeatedPatterns` | Máximo de grupos de patrón repetido — en cuántos sitios |
+| `MaxExecutionsPerPattern` | Ejecuciones del patrón más grande — cómo de grande el peor |
 | `MaxSlowQueries` | Máximo de comandos ≥ `SlowQueryThreshold` |
 | `MaxTotalDuration` | Suma de duraciones de comandos |
 | `MaxSingleQueryDuration` | Peor comando individual |
@@ -329,13 +331,34 @@ siendo dos queries. El precio es que un literal con significado también colapsa
 | Métrica | Significado |
 |---|---|
 | `QueryCount` | Comandos atribuidos al scope |
-| `ExactDuplicateCount` | Ejecuciones exactas redundantes |
-| `RepeatedPatternCount` | Grupos de patrón repetido |
+| `ExactDuplicateCount` | Ejecuciones exactas redundantes de lectura |
+| `RepeatedPatternCount` | Grupos de patrón repetido de lectura |
+| `MaximumPatternExecutions` | Ejecuciones del mayor patrón repetido de lectura |
 | `SlowQueryCount` | Comandos en o por encima del umbral lento |
 | `TotalDuration` | Suma de duraciones de comandos |
 | `MaximumDuration` | Comando individual más lento |
-| `ExactDuplicateGroups` | Duplicados exactos agrupados |
-| `RepeatedPatternGroups` | Patrones estructurales agrupados |
+| `ExactDuplicateGroups` | Duplicados exactos agrupados, cada uno con su `Operation` |
+| `RepeatedPatternGroups` | Patrones estructurales agrupados, cada uno con su `Operation` |
+
+### Lecturas y escrituras
+
+Los presupuestos de duplicados y patrones aplican **solo a lecturas**. Ejecutar el mismo `SELECT` con
+los mismos parámetros dos veces devuelve las mismas filas, así que la segunda ejecución es trabajo
+demostrablemente desperdiciado. Ejecutar el mismo `INSERT` dos veces no lo es: añade dos filas, y un
+`UPDATE counters SET n = n + 1` aplicado dos veces suma dos. Un `SaveChanges` con 50 entidades nuevas
+emite 50 ejecuciones de una misma forma de `INSERT` — la firma exacta de un N+1, y no un defecto.
+
+Así que las escrituras y todo lo que no es ni lectura ni escritura (ajustes de sesión, control de
+transacción, DDL) quedan fuera de `ExactDuplicateCount` y `RepeatedPatternCount`. Se siguen
+detectando y se siguen mostrando, bajo un encabezado propio y sin la etiqueta de posible N+1:
+
+```text
+Repeated write (not counted against the budget)
+INSERT INTO posts (title) VALUES (@p)
+Executions: 50
+```
+
+Cada grupo lleva `QueryGroup.Operation`, por si necesitas aplicar tu propia regla.
 
 ---
 
