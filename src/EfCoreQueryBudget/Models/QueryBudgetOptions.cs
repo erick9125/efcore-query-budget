@@ -23,6 +23,15 @@ public sealed record QueryBudgetOptions
 
     public int RepeatedPatternThreshold { get; init; } = 5;
 
+    /// <summary>
+    /// How SQL is normalized before queries are grouped into patterns. Set this to
+    /// <see cref="SqlNormalizationMode.MaskLiterals"/> when the SQL under test carries inline
+    /// literals — raw SQL, <c>FromSqlRaw</c>, or constants the provider inlines — since otherwise
+    /// every execution gets its own fingerprint and no pattern is ever detected.
+    /// </summary>
+    public SqlNormalizationMode SqlNormalization { get; init; }
+        = SqlNormalizationMode.WhitespaceOnly;
+
     public string? ScopeLabel { get; init; }
 
     public QueryParameterDisplayMode ParameterDisplayMode { get; init; }

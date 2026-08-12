@@ -10,7 +10,7 @@ Captured query parameters may contain emails, tokens, identifiers, personal data
 
 By default:
 
-- Reports show `Distinct parameter sets: N`
+- Reports show `Distinct variants: N`
 - Parameter values are hidden
 - Binary payloads are hashed for fingerprinting and never printed in full
 

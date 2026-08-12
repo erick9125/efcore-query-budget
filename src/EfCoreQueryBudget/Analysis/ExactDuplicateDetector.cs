@@ -5,12 +5,21 @@ public sealed class ExactDuplicateDetector
     private readonly ISqlNormalizer _normalizer;
     private readonly IQueryFingerprinter _fingerprinter;
 
+    /// <param name="normalizer">
+    /// Normalizes SQL for exact grouping and for the reported query. Literals must survive here,
+    /// so this is left whitespace-only regardless of <see cref="SqlNormalizationMode"/>.
+    /// </param>
+    /// <param name="fingerprinter">
+    /// Computes the exact fingerprint queries are grouped by. Defaults to one built over
+    /// <paramref name="normalizer"/>.
+    /// </param>
     public ExactDuplicateDetector(
         ISqlNormalizer? normalizer = null,
         IQueryFingerprinter? fingerprinter = null)
     {
         _normalizer = normalizer ?? new DefaultSqlNormalizer();
-        _fingerprinter = fingerprinter ?? new DefaultQueryFingerprinter(_normalizer);
+        _fingerprinter = fingerprinter
+            ?? new DefaultQueryFingerprinter(_normalizer, _normalizer);
     }
 
     public IReadOnlyList<QueryGroup> Detect(IReadOnlyList<RecordedQuery> queries)
@@ -22,7 +31,7 @@ public sealed class ExactDuplicateDetector
                 Fingerprint = g.Fingerprint,
                 NormalizedSql = _normalizer.Normalize(g.Queries[0].CommandText),
                 ExecutionCount = g.Queries.Count,
-                DistinctParameterSetCount = 1,
+                DistinctVariantCount = 1,
                 Queries = g.Queries
             })
             .OrderByDescending(g => g.ExecutionCount)

@@ -263,6 +263,7 @@ new QueryBudgetOptions
     MaxSingleQueryDuration = TimeSpan.FromMilliseconds(80),
     SlowQueryThreshold = TimeSpan.FromMilliseconds(100),
     RepeatedPatternThreshold = 5,
+    SqlNormalization = SqlNormalizationMode.WhitespaceOnly,
     ScopeLabel = "GET /api/orders",
     ParameterDisplayMode = QueryParameterDisplayMode.Hidden
 }
@@ -277,7 +278,39 @@ new QueryBudgetOptions
 | `MaxTotalDuration` | Suma de duraciones de comandos |
 | `MaxSingleQueryDuration` | Peor comando individual |
 | `RepeatedPatternThreshold` | Ejecuciones mínimas para que un patrón cuente (por defecto `5`) |
+| `SqlNormalization` | Cómo se normaliza el SQL antes de agrupar (por defecto `WhitespaceOnly`) |
 | `ScopeLabel` | Se muestra en el reporte de fallo |
+
+### SQL crudo y literales inline
+
+Los patrones se agrupan por SQL normalizado, y la normalización por defecto solo colapsa espacios.
+Así que si tu SQL lleva literales inline en vez de parámetros — SQL crudo, `FromSqlRaw`, o constantes
+que el proveedor inlinea — cada ejecución parece una query distinta y **no se detecta ningún patrón**:
+
+```text
+SELECT * FROM posts WHERE author_id = 1
+SELECT * FROM posts WHERE author_id = 2
+SELECT * FROM posts WHERE author_id = 3
+```
+
+Con `SqlNormalization` se enmascaran los literales y eso pasa a ser un solo patrón:
+
+```csharp
+await QueryBudget.AssertAsync(
+    new QueryBudgetOptions
+    {
+        MaxRepeatedPatterns = 0,
+        SqlNormalization = SqlNormalizationMode.MaskLiterals
+    },
+    async () => await service.GetFeedAsync());
+```
+
+Enmascara literales de texto y numéricos y colapsa `IN (1, 2, 3)` a `IN (?)`, dejando intactos los
+parámetros, los identificadores entrecomillados, `NULL` y los comentarios. La detección de duplicados
+exactos no se ve afectada: nunca enmascara, así que dos queries que difieren en un valor siguen
+siendo dos queries. El precio es que un literal con significado también colapsa, de modo que
+`LIMIT 10` y `LIMIT 20` pasan a ser el mismo patrón. Detalles en
+[docs/query-fingerprints.md](docs/query-fingerprints.md).
 
 ---
 
@@ -323,7 +356,7 @@ A menudo es un posible N+1. Los reportes dicen:
 ```text
 Possible N+1 query pattern
 Executions: 15
-Distinct parameter sets: 15
+Distinct variants: 15
 ```
 
 Nunca `N+1 confirmed`. La señal basta para investigar, no para probar la intención. Detalles: [docs/possible-n-plus-one.md](docs/possible-n-plus-one.md).
@@ -337,7 +370,7 @@ Los parámetros de consulta pueden contener emails, tokens, identificadores o co
 Por defecto, los reportes solo muestran conteos:
 
 ```text
-Distinct parameter sets: 12
+Distinct variants: 12
 ```
 
 | Modo | Comportamiento |

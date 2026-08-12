@@ -2,8 +2,22 @@
 
 ## Unreleased
 
+### Added
+
+- `QueryBudgetOptions.SqlNormalization` selects how SQL is normalized before queries are grouped
+  into patterns. The new `SqlNormalizationMode.MaskLiterals` replaces inline string and numeric
+  literals with `?` and collapses variable-length `IN` lists, so raw SQL, `FromSqlRaw` and
+  provider-inlined constants can be grouped at all. It leaves parameters, quoted identifiers,
+  `NULL` and comments alone, and applies only to the structural fingerprint — exact-duplicate
+  detection never masks, so two queries differing in a value stay two queries. The default,
+  `WhitespaceOnly`, is the previous behavior.
+
 ### Fixed
 
+- A repeated pattern in SQL carrying inline literals is now detectable. Two things hid it: the
+  normalizer gave every execution a different structural fingerprint, and the pattern filter
+  required more than one distinct *parameter set* — of which a query with no parameters has exactly
+  one. Fixing only the first would have changed nothing observable.
 - Commands are no longer attributed to a scope on another execution flow. The previous behavior
   claimed any flow-less command whenever exactly one scope was active process-wide, so a parallel
   test, a hosted service or a background seed would be counted against the active budget. It is
@@ -17,6 +31,16 @@
 
 ### Breaking
 
+- `QueryGroup.DistinctParameterSetCount` is now `QueryGroup.DistinctVariantCount`, and it counts
+  distinct exact fingerprints rather than distinct parameter sets. For a parameterized query the
+  number is the same as before; for one with inline literals it is the only thing that can tell the
+  executions apart. Reports say `Distinct variants: N` instead of `Distinct parameter sets: N`.
+- Removed `DefaultQueryFingerprinter.ParameterSetKey`. Nothing calls it now that variants are
+  counted by exact fingerprint, and it was the one place bypassing the `IQueryFingerprinter`
+  abstraction.
+- `DefaultQueryFingerprinter` takes a second normalizer, `exactNormalizer`, so the structural and
+  exact fingerprints can normalize differently. Both parameters are optional and default to the
+  previous behavior.
 - Renamed the package, assembly and root namespace, aligning with the already-published
   `erick9125.AuditableOperations`. Nothing was released under the old identity, so no consumer is
   affected.

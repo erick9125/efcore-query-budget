@@ -261,6 +261,7 @@ new QueryBudgetOptions
     MaxSingleQueryDuration = TimeSpan.FromMilliseconds(80),
     SlowQueryThreshold = TimeSpan.FromMilliseconds(100),
     RepeatedPatternThreshold = 5,
+    SqlNormalization = SqlNormalizationMode.WhitespaceOnly,
     ScopeLabel = "GET /api/orders",
     ParameterDisplayMode = QueryParameterDisplayMode.Hidden
 }
@@ -275,7 +276,38 @@ new QueryBudgetOptions
 | `MaxTotalDuration` | Sum of command durations |
 | `MaxSingleQueryDuration` | Worst single command |
 | `RepeatedPatternThreshold` | Minimum executions before a pattern counts (default `5`) |
+| `SqlNormalization` | How SQL is normalized before grouping (default `WhitespaceOnly`) |
 | `ScopeLabel` | Shown in the failure report |
+
+### Raw SQL and inline literals
+
+Patterns are grouped by normalized SQL, and the default normalization only collapses whitespace. So
+if your SQL carries inline literals instead of parameters — raw SQL, `FromSqlRaw`, or constants the
+provider inlines — each execution looks like a different query, and **no pattern is detected**:
+
+```text
+SELECT * FROM posts WHERE author_id = 1
+SELECT * FROM posts WHERE author_id = 2
+SELECT * FROM posts WHERE author_id = 3
+```
+
+Set `SqlNormalization` to mask the literals and those become one pattern:
+
+```csharp
+await QueryBudget.AssertAsync(
+    new QueryBudgetOptions
+    {
+        MaxRepeatedPatterns = 0,
+        SqlNormalization = SqlNormalizationMode.MaskLiterals
+    },
+    async () => await service.GetFeedAsync());
+```
+
+It masks string and numeric literals and collapses `IN (1, 2, 3)` to `IN (?)`, leaving parameters,
+quoted identifiers, `NULL` and comments alone. Exact-duplicate detection is unaffected: it never
+masks, so two queries differing in a value stay two queries. The trade-off is that a literal which
+carries meaning collapses too, so `LIMIT 10` and `LIMIT 20` become one pattern. Details in
+[docs/query-fingerprints.md](docs/query-fingerprints.md).
 
 ---
 
@@ -321,7 +353,7 @@ Often a possible N+1. Reports say:
 ```text
 Possible N+1 query pattern
 Executions: 15
-Distinct parameter sets: 15
+Distinct variants: 15
 ```
 
 Never `N+1 confirmed`. The signal is strong enough to investigate, not strong enough to prove intent. Details: [docs/possible-n-plus-one.md](docs/possible-n-plus-one.md).
@@ -335,7 +367,7 @@ Query parameters may contain emails, tokens, identifiers, or passwords.
 By default, reports show counts only:
 
 ```text
-Distinct parameter sets: 12
+Distinct variants: 12
 ```
 
 | Mode | Behavior |

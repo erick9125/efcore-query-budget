@@ -28,7 +28,7 @@ Report wording:
 Possible N+1 query pattern
 
 Executions: 15
-Distinct parameter sets: 15
+Distinct variants: 15
 ```
 
 Never claim `N+1 confirmed`. The signal is strong enough to investigate, not strong enough to prove.
