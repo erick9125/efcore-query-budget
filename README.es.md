@@ -264,6 +264,7 @@ new QueryBudgetOptions
     SlowQueryThreshold = TimeSpan.FromMilliseconds(100),
     RepeatedPatternThreshold = 5,
     SqlNormalization = SqlNormalizationMode.WhitespaceOnly,
+    MaxRecordedQueries = 10_000,
     ScopeLabel = "GET /api/orders",
     ParameterDisplayMode = QueryParameterDisplayMode.Hidden
 }
@@ -279,7 +280,14 @@ new QueryBudgetOptions
 | `MaxSingleQueryDuration` | Peor comando individual |
 | `RepeatedPatternThreshold` | Ejecuciones mínimas para que un patrón cuente (por defecto `5`) |
 | `SqlNormalization` | Cómo se normaliza el SQL antes de agrupar (por defecto `WhitespaceOnly`) |
+| `MaxRecordedQueries` | Queries retenidas para el análisis (por defecto `10_000`, `null` para no limitar) |
 | `ScopeLabel` | Se muestra en el reporte de fallo |
+
+`MaxRecordedQueries` acota la memoria, no el presupuesto. Pasado el tope, los comandos se siguen
+contando y cronometrando — `QueryCount`, `TotalDuration`, `MaximumDuration` y `SlowQueryCount`
+cubren siempre todo lo que corrió, así que un presupuesto nunca puede pasar porque el scope dejara
+de mirar. Solo los grupos de duplicados y patrones se construyen sobre la muestra retenida, y el
+reporte dice cuántas quedaron fuera.
 
 ### SQL crudo y literales inline
 

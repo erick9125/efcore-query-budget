@@ -202,12 +202,12 @@ public sealed class QueryBudgetCommandInterceptor : DbCommandInterceptor
         string? connectionId,
         Guid commandId)
     {
+        // Projected now rather than held by reference: the value belongs to the caller and may be
+        // large, mutable, or sensitive, and the scope outlives the command by design.
         var parameters = new Dictionary<string, object?>(StringComparer.Ordinal);
         foreach (DbParameter parameter in command.Parameters)
         {
-            parameters[parameter.ParameterName] = parameter.Value == DBNull.Value
-                ? null
-                : parameter.Value;
+            parameters[parameter.ParameterName] = ParameterCapture.Capture(parameter.Value);
         }
 
         return new RecordedQuery

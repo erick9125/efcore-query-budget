@@ -13,9 +13,17 @@ public sealed class QueryMetricsCalculator
         _injectedRepeatedPatternDetector = repeatedPatternDetector;
     }
 
+    /// <param name="queries">The queries the scope retained.</param>
+    /// <param name="options">The budget being measured against.</param>
+    /// <param name="totals">
+    /// What the scope counted across every command, including any it could not retain. When given,
+    /// the aggregate metrics come from here instead of from <paramref name="queries"/>, so a scope
+    /// that ran past its retention cap is still evaluated against everything that ran.
+    /// </param>
     public QueryMetrics Calculate(
         IReadOnlyList<RecordedQuery> queries,
-        QueryBudgetOptions? options = null)
+        QueryBudgetOptions? options = null,
+        QueryCaptureTotals? totals = null)
     {
         options ??= new QueryBudgetOptions();
 
@@ -53,12 +61,13 @@ public sealed class QueryMetricsCalculator
 
         return new QueryMetrics
         {
-            QueryCount = queries.Count,
+            QueryCount = totals?.ExecutionCount ?? queries.Count,
             ExactDuplicateCount = exactDuplicateCount,
             RepeatedPatternCount = repeatedPatternGroups.Count,
-            SlowQueryCount = slowQueryCount,
-            TotalDuration = totalDuration,
-            MaximumDuration = maximumDuration,
+            SlowQueryCount = totals?.SlowQueryCount ?? slowQueryCount,
+            TotalDuration = totals?.TotalDuration ?? totalDuration,
+            MaximumDuration = totals?.MaximumDuration ?? maximumDuration,
+            DiscardedQueryCount = totals?.DiscardedQueryCount ?? 0,
             ExactDuplicateGroups = exactDuplicateGroups,
             RepeatedPatternGroups = repeatedPatternGroups,
             Queries = queries

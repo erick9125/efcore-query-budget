@@ -40,13 +40,13 @@ public static class QueryBudget
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(action);
 
-        using var _ = QueryBudgetContext.Begin();
+        using var _ = QueryBudgetContext.Begin(options);
         var scope = QueryBudgetContext.Current
             ?? throw new InvalidOperationException("Query budget scope was not established.");
 
         T value = await action().ConfigureAwait(false);
 
-        var metrics = MetricsCalculator.Calculate(scope.Snapshot(), options) with
+        var metrics = MetricsCalculator.Calculate(scope.Snapshot(), options, scope.Totals) with
         {
             DuplicateCaptureCount = scope.DuplicateCaptureCount
         };

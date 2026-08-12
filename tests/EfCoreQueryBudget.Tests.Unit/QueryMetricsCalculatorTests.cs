@@ -43,6 +43,41 @@ public class QueryMetricsCalculatorTests
             .RepeatedPatternCount.Should().Be(0);
     }
 
+    [Fact]
+    public void Without_totals_the_aggregates_come_from_the_queries()
+    {
+        var metrics = new QueryMetricsCalculator().Calculate(InlineLiteralNPlusOne());
+
+        metrics.QueryCount.Should().Be(6);
+        metrics.TotalDuration.Should().Be(TimeSpan.FromMilliseconds(30));
+        metrics.DiscardedQueryCount.Should().Be(0);
+    }
+
+    [Fact]
+    public void With_totals_the_aggregates_come_from_the_scope()
+    {
+        var totals = new QueryCaptureTotals
+        {
+            ExecutionCount = 900,
+            DiscardedQueryCount = 894,
+            TotalDuration = TimeSpan.FromSeconds(3),
+            MaximumDuration = TimeSpan.FromMilliseconds(400),
+            SlowQueryCount = 12
+        };
+
+        var metrics = new QueryMetricsCalculator()
+            .Calculate(InlineLiteralNPlusOne(), new QueryBudgetOptions(), totals);
+
+        metrics.QueryCount.Should().Be(900);
+        metrics.TotalDuration.Should().Be(TimeSpan.FromSeconds(3));
+        metrics.MaximumDuration.Should().Be(TimeSpan.FromMilliseconds(400));
+        metrics.SlowQueryCount.Should().Be(12);
+        metrics.DiscardedQueryCount.Should().Be(894);
+
+        // The groups still describe what was retained.
+        metrics.Queries.Should().HaveCount(6);
+    }
+
     private static RecordedQuery[] InlineLiteralNPlusOne()
     {
         return Enumerable.Range(1, 6)

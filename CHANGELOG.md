@@ -4,6 +4,12 @@
 
 ### Added
 
+- `QueryBudgetOptions.MaxRecordedQueries` caps how many queries a scope retains for analysis
+  (default `10_000`, `null` for no limit). A long-running scope no longer grows without bound.
+  Retention is never cut silently: the number dropped is reported as
+  `QueryMetrics.DiscardedQueryCount` and warned about in the report. Only retention is capped —
+  `QueryCount`, `TotalDuration`, `MaximumDuration` and `SlowQueryCount` still cover every command
+  the scope accepted, so a budget cannot pass because the scope stopped retaining.
 - `QueryBudgetOptions.SqlNormalization` selects how SQL is normalized before queries are grouped
   into patterns. The new `SqlNormalizationMode.MaskLiterals` replaces inline string and numeric
   literals with `?` and collapses variable-length `IN` lists, so raw SQL, `FromSqlRaw` and
@@ -14,6 +20,13 @@
 
 ### Fixed
 
+- Parameter values are no longer held by reference for the life of the scope. They are projected at
+  capture time into an immutable `ParameterSnapshot`, so a large payload is not pinned, personal
+  data does not outlive the command that used it, and a mutable value can no longer change between
+  the command running and the fingerprint being computed — which used to move an already-executed
+  query into a different group. Binary payloads keep only their length and a SHA-256; long strings
+  and arrays keep a bounded rendering plus a hash of the whole, so two values sharing a prefix are
+  still told apart.
 - A repeated pattern in SQL carrying inline literals is now detectable. Two things hid it: the
   normalizer gave every execution a different structural fingerprint, and the pattern filter
   required more than one distinct *parameter set* — of which a query with no parameters has exactly
@@ -31,6 +44,12 @@
 
 ### Breaking
 
+- Captured parameter values may now arrive as `ParameterSnapshot` rather than as the original
+  object. Code reading `RecordedQuery.Parameters` from a captured command should handle it; values
+  put there by hand are untouched, and immutable scalars and short strings are still stored as
+  themselves.
+- `QueryMetricsCalculator.Calculate` takes an optional third argument, `QueryCaptureTotals`. Omit it
+  and the aggregates are derived from the queries exactly as before.
 - `QueryGroup.DistinctParameterSetCount` is now `QueryGroup.DistinctVariantCount`, and it counts
   distinct exact fingerprints rather than distinct parameter sets. For a parameterized query the
   number is the same as before; for one with inline literals it is the only thing that can tell the
