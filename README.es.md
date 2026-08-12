@@ -1,7 +1,7 @@
 # EF Core Query Budget
 
 [![CI](https://img.shields.io/badge/ci-GitHub%20Actions-blue)](.github/workflows/ci.yml)
-[![NuGet](https://img.shields.io/badge/nuget-ErickMorales.EntityFrameworkCore.QueryBudget-blue)](https://www.nuget.org/packages/ErickMorales.EntityFrameworkCore.QueryBudget)
+[![NuGet](https://img.shields.io/badge/nuget-erick9125.EfCoreQueryBudget-blue)](https://www.nuget.org/packages/erick9125.EfCoreQueryBudget)
 [![Target](https://img.shields.io/badge/.NET-8.0%20%7C%209.0-512BD4)](#)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
@@ -94,7 +94,7 @@ Possible N+1 query pattern.
 ## Instalación
 
 ```bash
-dotnet add package ErickMorales.EntityFrameworkCore.QueryBudget
+dotnet add package erick9125.EfCoreQueryBudget
 ```
 
 **Requisitos:** .NET 8 o .NET 9, con la major de EF Core correspondiente (8.x o 9.x). ASP.NET Core es opcional: la librería funciona en tests de servicios y repositorios sin host web.
@@ -106,7 +106,7 @@ dotnet add package ErickMorales.EntityFrameworkCore.QueryBudget
 ### 1. Registrar el interceptor
 
 ```csharp
-using ErickMorales.EntityFrameworkCore.QueryBudget;
+using EfCoreQueryBudget;
 using Microsoft.EntityFrameworkCore;
 
 builder.Services.AddEfCoreQueryBudget();
@@ -134,7 +134,7 @@ builder.Services.AddEfCoreQueryBudget(options =>
 ### 2. Afirmar un presupuesto en un test
 
 ```csharp
-using ErickMorales.EntityFrameworkCore.QueryBudget;
+using EfCoreQueryBudget;
 
 await QueryBudget.AssertAsync(
     new QueryBudgetOptions
@@ -244,7 +244,7 @@ var posts = await context.Posts
     .ToListAsync();
 ```
 
-Un presupuesto como `MaxQueries = 4` / `MaxRepeatedPatterns = 0` falla en la ruta problemática y pasa en la optimizada. La app de ejemplo en `samples/AspNetCorePostgresSample` demuestra ambos endpoints.
+Un presupuesto como `MaxQueries = 4` / `MaxRepeatedPatterns = 0` falla en la ruta problemática y pasa en la optimizada. La app de ejemplo en `samples/AspNetCorePostgres` demuestra ambos endpoints.
 
 ---
 

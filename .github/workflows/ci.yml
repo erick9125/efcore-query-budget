@@ -31,22 +31,22 @@ jobs:
       # Runs against both net8.0 and net9.0 so neither library build ships untested.
       - name: Unit tests
         run: >
-          dotnet test tests/QueryBudget.UnitTests/QueryBudget.UnitTests.csproj
+          dotnet test tests/EfCoreQueryBudget.Tests.Unit/EfCoreQueryBudget.Tests.Unit.csproj
           --no-build --configuration Release --verbosity normal
 
       - name: Concurrency tests
         run: >
-          dotnet test tests/QueryBudget.ConcurrencyTests/QueryBudget.ConcurrencyTests.csproj
+          dotnet test tests/EfCoreQueryBudget.Tests.Concurrency/EfCoreQueryBudget.Tests.Concurrency.csproj
           --no-build --configuration Release --verbosity normal
 
       - name: Integration tests
         run: >
-          dotnet test tests/QueryBudget.IntegrationTests/QueryBudget.IntegrationTests.csproj
+          dotnet test tests/EfCoreQueryBudget.Tests.Integration/EfCoreQueryBudget.Tests.Integration.csproj
           --no-build --configuration Release --verbosity normal
 
       - name: Pack
         run: >
-          dotnet pack src/QueryBudget.EntityFrameworkCore/QueryBudget.EntityFrameworkCore.csproj
+          dotnet pack src/EfCoreQueryBudget/EfCoreQueryBudget.csproj
           --no-build --configuration Release --output artifacts
 
       - name: Verify the package carries docs and symbols for every target framework
