@@ -32,6 +32,14 @@ public sealed record QueryBudgetOptions
     public SqlNormalizationMode SqlNormalization { get; init; }
         = SqlNormalizationMode.WhitespaceOnly;
 
+    /// <summary>
+    /// How many queries the scope retains for analysis. Beyond it, commands are still counted and
+    /// timed but no longer held, so a long-running scope cannot grow without bound. The number
+    /// dropped is reported as <see cref="QueryMetrics.DiscardedQueryCount"/> — retention is never
+    /// cut silently. Set to <see langword="null"/> to retain everything.
+    /// </summary>
+    public int? MaxRecordedQueries { get; init; } = 10_000;
+
     public string? ScopeLabel { get; init; }
 
     public QueryParameterDisplayMode ParameterDisplayMode { get; init; }

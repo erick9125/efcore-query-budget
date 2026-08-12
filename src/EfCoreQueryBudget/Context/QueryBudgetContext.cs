@@ -29,14 +29,24 @@ public static class QueryBudgetContext
     /// </summary>
     /// <exception cref="InvalidOperationException">A scope is already active on this flow.</exception>
     public static IDisposable Begin()
+        => Begin(new QueryBudgetOptions());
+
+    /// <summary>
+    /// Starts a scope on the current execution flow, taking its retention cap and slow-query
+    /// threshold from <paramref name="options"/>. Dispose the result to end it.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">A scope is already active on this flow.</exception>
+    public static IDisposable Begin(QueryBudgetOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options);
+
         if (CurrentScope.Value is not null)
         {
             throw new InvalidOperationException(
                 "Nested query budget scopes are not supported.");
         }
 
-        var scope = new QueryScope();
+        var scope = new QueryScope(options);
         CurrentScope.Value = scope;
 
         lock (Gate)

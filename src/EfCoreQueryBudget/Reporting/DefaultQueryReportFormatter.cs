@@ -33,6 +33,16 @@ public sealed class DefaultQueryReportFormatter : IQueryReportFormatter
             lines.AppendLine();
         }
 
+        if (result.Metrics.DiscardedQueryCount > 0)
+        {
+            lines.AppendLine(
+                $"{result.Metrics.DiscardedQueryCount} query(s) ran but were not retained: the scope reached "
+                + "MaxRecordedQueries. Counts and durations above cover every command; the duplicate and "
+                + "pattern groups below cover the retained ones only. Raise MaxRecordedQueries, or set it to "
+                + "null, to analyze them all.");
+            lines.AppendLine();
+        }
+
         foreach (var violation in result.Violations)
         {
             lines.AppendLine(violation.Label);
@@ -151,6 +161,7 @@ public sealed class DefaultQueryReportFormatter : IQueryReportFormatter
         return value switch
         {
             null => "null",
+            ParameterSnapshot snapshot => snapshot.TypeName,
             byte[] bytes => $"byte[{bytes.Length}]",
             _ => value.GetType().Name
         };
@@ -161,6 +172,8 @@ public sealed class DefaultQueryReportFormatter : IQueryReportFormatter
         return value switch
         {
             null => "null",
+            // A snapshot with no text is one that must never be printed, such as a binary payload.
+            ParameterSnapshot snapshot => snapshot.Text ?? $"{snapshot.TypeName}#redacted",
             byte[] bytes => $"byte[{bytes.Length}]#redacted",
             string s => $"\"{s}\"",
             _ => Convert.ToString(value, CultureInfo.InvariantCulture) ?? value.GetType().Name

@@ -23,6 +23,15 @@ public sealed record QueryMetrics
     /// </summary>
     public int DuplicateCaptureCount { get; init; }
 
+    /// <summary>
+    /// Commands that ran but were not retained, because the scope had reached
+    /// <see cref="QueryBudgetOptions.MaxRecordedQueries"/>. They are counted and timed in
+    /// <see cref="QueryCount"/>, <see cref="TotalDuration"/>, <see cref="MaximumDuration"/> and
+    /// <see cref="SlowQueryCount"/>; the duplicate and pattern groups below cover only what was
+    /// retained.
+    /// </summary>
+    public int DiscardedQueryCount { get; init; }
+
     public IReadOnlyList<QueryGroup> ExactDuplicateGroups { get; init; }
         = Array.Empty<QueryGroup>();
 

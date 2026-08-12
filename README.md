@@ -262,6 +262,7 @@ new QueryBudgetOptions
     SlowQueryThreshold = TimeSpan.FromMilliseconds(100),
     RepeatedPatternThreshold = 5,
     SqlNormalization = SqlNormalizationMode.WhitespaceOnly,
+    MaxRecordedQueries = 10_000,
     ScopeLabel = "GET /api/orders",
     ParameterDisplayMode = QueryParameterDisplayMode.Hidden
 }
@@ -277,7 +278,13 @@ new QueryBudgetOptions
 | `MaxSingleQueryDuration` | Worst single command |
 | `RepeatedPatternThreshold` | Minimum executions before a pattern counts (default `5`) |
 | `SqlNormalization` | How SQL is normalized before grouping (default `WhitespaceOnly`) |
+| `MaxRecordedQueries` | Queries retained for analysis (default `10_000`, `null` for no limit) |
 | `ScopeLabel` | Shown in the failure report |
+
+`MaxRecordedQueries` bounds memory, not the budget. Past the cap, commands are still counted and
+timed — `QueryCount`, `TotalDuration`, `MaximumDuration` and `SlowQueryCount` always cover everything
+that ran, so a budget can never pass because the scope stopped looking. Only the duplicate and
+pattern groups are built from the retained sample, and the report says how many were left out.
 
 ### Raw SQL and inline literals
 

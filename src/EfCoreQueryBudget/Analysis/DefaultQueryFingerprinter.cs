@@ -81,6 +81,14 @@ internal static class ParameterNormalizer
                     DateTimeKind.Utc)
                 .ToString("O", CultureInfo.InvariantCulture),
             DateTimeOffset dto => dto.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
+            // Values captured from a live command arrive already projected. The hash is what keeps
+            // two long values sharing a prefix from fingerprinting alike.
+            ParameterSnapshot snapshot => new Dictionary<string, object?>
+            {
+                ["__type"] = snapshot.TypeName,
+                ["text"] = snapshot.Text,
+                ["hash"] = snapshot.ContentHash
+            },
             byte[] bytes => new Dictionary<string, object>
             {
                 ["__type"] = "byte[]",
