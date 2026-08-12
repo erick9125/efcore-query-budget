@@ -4,6 +4,10 @@
 
 ### Added
 
+- The interception path is now covered by tests, and covered on both target frameworks. All eight
+  recording entry points — reader, scalar and non-query, sync and async, plus the two failure
+  callbacks — had no direct test, and the only indirect coverage lived in a `net9.0`-only project,
+  so the `net8.0` assembly shipped without ever having executed a capture in any test.
 - `QueryBudgetOptions.MaxExecutionsPerPattern` bounds the largest repeated pattern, reported as
   `QueryMetrics.MaximumPatternExecutions`. `MaxRepeatedPatterns` counts groups, so five executions
   in one place and five thousand in another both counted as one; the size of an N+1, which is what
