@@ -81,17 +81,13 @@ public class QueryScopeRetentionTests
 
         var metrics = new QueryMetricsCalculator().Calculate(
             scope.Snapshot(),
-            new QueryBudgetOptions(),
+            new QueryBudgetOptions { MaxQueries = 5 },
             scope.Totals);
 
         metrics.QueryCount.Should().Be(10);
         metrics.DiscardedQueryCount.Should().Be(7);
 
-        var result = new QueryBudgetEvaluator().Evaluate(
-            new QueryBudgetOptions { MaxQueries = 5 },
-            metrics);
-
-        result.Passed.Should().BeFalse();
+        new QueryBudgetEvaluator().Evaluate(metrics).Passed.Should().BeFalse();
     }
 
     [Fact]
@@ -102,11 +98,9 @@ public class QueryScopeRetentionTests
 
         var metrics = new QueryMetricsCalculator().Calculate(
             scope.Snapshot(),
-            new QueryBudgetOptions(),
-            scope.Totals);
-        var result = new QueryBudgetEvaluator().Evaluate(
             new QueryBudgetOptions { MaxQueries = 5 },
-            metrics);
+            scope.Totals);
+        var result = new QueryBudgetEvaluator().Evaluate(metrics);
 
         new DefaultQueryReportFormatter().Format(result)
             .Should().Contain("7 query(s) ran but were not retained");

@@ -127,14 +127,12 @@ public class QueryBudgetApiTests
 
         var metrics = new QueryMetricsCalculator().Calculate(
             queries,
-            new QueryBudgetOptions { RepeatedPatternThreshold = 5 });
-        var result = new QueryBudgetEvaluator().Evaluate(
             new QueryBudgetOptions
             {
                 MaxRepeatedPatterns = 0,
                 RepeatedPatternThreshold = 5
-            },
-            metrics);
+            });
+        var result = new QueryBudgetEvaluator().Evaluate(metrics);
 
         var report = new DefaultQueryReportFormatter().Format(result);
         report.Should().Contain("Distinct variants: 5");

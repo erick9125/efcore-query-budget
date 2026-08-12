@@ -5,11 +5,16 @@ namespace EfCoreQueryBudget;
 /// </summary>
 public sealed class QueryBudgetEvaluator
 {
-    public QueryBudgetResult Evaluate(QueryBudgetOptions budget, QueryMetrics metrics)
+    /// <param name="metrics">
+    /// The metrics to score, which carry the budget they were computed against. Taking the budget
+    /// from here rather than as a second argument is what stops metrics from being scored against a
+    /// budget that did not produce them.
+    /// </param>
+    public QueryBudgetResult Evaluate(QueryMetrics metrics)
     {
-        ArgumentNullException.ThrowIfNull(budget);
         ArgumentNullException.ThrowIfNull(metrics);
 
+        var budget = metrics.Budget;
         var violations = new List<QueryBudgetViolation>();
 
         if (budget.MaxQueries is int maxQueries && metrics.QueryCount > maxQueries)
@@ -83,7 +88,6 @@ public sealed class QueryBudgetEvaluator
         return new QueryBudgetResult
         {
             Passed = violations.Count == 0,
-            Budget = budget,
             Metrics = metrics,
             Violations = violations
         };

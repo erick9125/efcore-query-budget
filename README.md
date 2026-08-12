@@ -432,6 +432,37 @@ Timing uses EF Core command-end durations (`CommandExecutedEventData.Duration`),
 
 ---
 
+## Replacing a piece
+
+`QueryBudget` is a shortcut over a default `QueryBudgetRunner`. Build a runner of your own to swap
+any of the three abstractions:
+
+```csharp
+var runner = new QueryBudgetRunner(
+    new MyAnalysisFactory(),        // ISqlNormalizer + IQueryFingerprinter
+    new MyReportFormatter());       // IQueryReportFormatter
+
+await runner.AssertAsync(new QueryBudgetOptions { MaxQueries = 5 }, async () => ...);
+```
+
+The normalizer and the fingerprinter come from an `IQueryAnalysisFactory` rather than being passed
+directly, because the normalization mode arrives with the budget, per assertion, while the pipeline
+has to be built before the queries are grouped:
+
+```csharp
+public interface IQueryAnalysisFactory
+{
+    ISqlNormalizer CreateNormalizer(SqlNormalizationMode mode);
+    IQueryFingerprinter CreateFingerprinter(SqlNormalizationMode mode);
+}
+```
+
+Start from `DefaultQueryAnalysisFactory` and override what you need. One rule matters if you write
+your own fingerprinter: keep literals out of the **structural** fingerprint only. The exact one has
+to keep them, or two queries differing in a value get reported as the same query.
+
+---
+
 ## Environment guidance
 
 | Environment | Recommendation |

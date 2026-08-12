@@ -2,19 +2,25 @@ namespace EfCoreQueryBudget;
 
 public sealed class QueryMetricsCalculator
 {
-    private readonly ExactDuplicateDetector? _injectedExactDuplicateDetector;
-    private readonly RepeatedPatternDetector? _injectedRepeatedPatternDetector;
+    private readonly IQueryAnalysisFactory _analysis;
 
-    public QueryMetricsCalculator(
-        ExactDuplicateDetector? exactDuplicateDetector = null,
-        RepeatedPatternDetector? repeatedPatternDetector = null)
+    public QueryMetricsCalculator()
+        : this(new DefaultQueryAnalysisFactory())
     {
-        _injectedExactDuplicateDetector = exactDuplicateDetector;
-        _injectedRepeatedPatternDetector = repeatedPatternDetector;
+    }
+
+    public QueryMetricsCalculator(IQueryAnalysisFactory analysis)
+    {
+        ArgumentNullException.ThrowIfNull(analysis);
+        _analysis = analysis;
     }
 
     /// <param name="queries">The queries the scope retained.</param>
-    /// <param name="options">The budget being measured against.</param>
+    /// <param name="options">
+    /// The budget being measured against. It shapes the metrics — through the slow-query threshold,
+    /// the repeat threshold and the normalization mode — so it travels on the result as
+    /// <see cref="QueryMetrics.Budget"/> and is the only budget they can be evaluated against.
+    /// </param>
     /// <param name="totals">
     /// What the scope counted across every command, including any it could not retain. When given,
     /// the aggregate metrics come from here instead of from <paramref name="queries"/>, so a scope
@@ -25,20 +31,23 @@ public sealed class QueryMetricsCalculator
         QueryBudgetOptions? options = null,
         QueryCaptureTotals? totals = null)
     {
+        ArgumentNullException.ThrowIfNull(queries);
         options ??= new QueryBudgetOptions();
 
-        // The pattern detector depends on the normalization mode, which only arrives with the
-        // options, so it is composed per call. An injected detector wins over the option.
-        var repeatedPatternDetector = _injectedRepeatedPatternDetector
-            ?? new RepeatedPatternDetector(new DefaultSqlNormalizer(options.SqlNormalization));
+        // Memoized for this analysis only: both detectors ask for the exact fingerprint, and a
+        // longer-lived cache would pin every query it ever saw.
+        var fingerprinter = new MemoizingQueryFingerprinter(
+            _analysis.CreateFingerprinter(options.SqlNormalization));
 
-        // Exact duplicates never mask: two queries differing in a literal are not the same query.
-        var exactDuplicateDetector = _injectedExactDuplicateDetector ?? new ExactDuplicateDetector();
+        var patternNormalizer = _analysis.CreateNormalizer(options.SqlNormalization);
+        var exactNormalizer = _analysis.CreateNormalizer(SqlNormalizationMode.WhitespaceOnly);
 
-        var exactDuplicateGroups = exactDuplicateDetector.Detect(queries);
-        var repeatedPatternGroups = repeatedPatternDetector.Detect(
-            queries,
-            options.RepeatedPatternThreshold);
+        var exactDuplicateGroups =
+            new ExactDuplicateDetector(exactNormalizer, fingerprinter).Detect(queries);
+
+        var repeatedPatternGroups =
+            new RepeatedPatternDetector(patternNormalizer, fingerprinter)
+                .Detect(queries, options.RepeatedPatternThreshold);
 
         // Only reads reach the budget. Repeating a read with the same parameters returns the same
         // rows, so the extra execution is provably wasted; repeating a write is not — two identical
@@ -71,6 +80,7 @@ public sealed class QueryMetricsCalculator
 
         return new QueryMetrics
         {
+            Budget = options,
             QueryCount = totals?.ExecutionCount ?? queries.Count,
             ExactDuplicateCount = exactDuplicateCount,
             RepeatedPatternCount = readPatternGroups.Length,

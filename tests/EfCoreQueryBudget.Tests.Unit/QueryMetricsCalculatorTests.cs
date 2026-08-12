@@ -34,13 +34,24 @@ public class QueryMetricsCalculatorTests
     }
 
     [Fact]
-    public void An_injected_detector_wins_over_the_option()
+    public void An_injected_analysis_factory_replaces_the_pipeline()
     {
-        var calculator = new QueryMetricsCalculator(
-            repeatedPatternDetector: new RepeatedPatternDetector());
+        // The factory ignores the mode and never masks, so the option no longer reaches grouping.
+        var calculator = new QueryMetricsCalculator(new WhitespaceOnlyAnalysisFactory());
 
         calculator.Calculate(InlineLiteralNPlusOne(), Masking)
             .RepeatedPatternCount.Should().Be(0);
+    }
+
+    private sealed class WhitespaceOnlyAnalysisFactory : IQueryAnalysisFactory
+    {
+        private readonly IQueryAnalysisFactory _inner = new DefaultQueryAnalysisFactory();
+
+        public ISqlNormalizer CreateNormalizer(SqlNormalizationMode mode)
+            => _inner.CreateNormalizer(SqlNormalizationMode.WhitespaceOnly);
+
+        public IQueryFingerprinter CreateFingerprinter(SqlNormalizationMode mode)
+            => _inner.CreateFingerprinter(SqlNormalizationMode.WhitespaceOnly);
     }
 
     [Fact]

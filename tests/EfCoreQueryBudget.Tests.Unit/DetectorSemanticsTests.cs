@@ -97,15 +97,12 @@ public class DetectorSemanticsTests
         => new QueryMetricsCalculator().Calculate(queries, new QueryBudgetOptions());
 
     private static QueryBudgetResult Evaluate(RecordedQuery[] queries, QueryBudgetOptions budget)
-        => new QueryBudgetEvaluator().Evaluate(budget, Calculate(queries));
+        => new QueryBudgetEvaluator().Evaluate(
+            new QueryMetricsCalculator().Calculate(queries, budget));
 
     private static string Report(RecordedQuery[] queries)
     {
-        var budget = new QueryBudgetOptions { MaxQueries = 0 };
-        var result = new QueryBudgetEvaluator().Evaluate(
-            budget,
-            new QueryMetricsCalculator().Calculate(queries, budget));
-
+        var result = Evaluate(queries, new QueryBudgetOptions { MaxQueries = 0 });
         return new DefaultQueryReportFormatter().Format(result);
     }
 

@@ -5,7 +5,8 @@ namespace EfCoreQueryBudget.Tests.Unit;
 
 public class QueryFingerprinterTests
 {
-    private readonly DefaultQueryFingerprinter _fingerprinter = new();
+    private readonly IQueryFingerprinter _fingerprinter =
+        new DefaultQueryAnalysisFactory().CreateFingerprinter(SqlNormalizationMode.WhitespaceOnly);
 
     [Fact]
     public void Structural_fingerprint_ignores_parameter_values()
