@@ -11,12 +11,9 @@ public class QueryBudgetEvaluatorTests
     [Fact]
     public void Passes_when_within_limits()
     {
-        var metrics = Metrics(
-            Query("SELECT 1", TimeSpan.FromMilliseconds(10)));
-
-        var result = _evaluator.Evaluate(
+        var result = Evaluate(
             new QueryBudgetOptions { MaxQueries = 5 },
-            metrics);
+            Query("SELECT 1", TimeSpan.FromMilliseconds(10)));
 
         result.Passed.Should().BeTrue();
         result.Violations.Should().BeEmpty();
@@ -25,13 +22,10 @@ public class QueryBudgetEvaluatorTests
     [Fact]
     public void Fails_when_query_count_exceeded()
     {
-        var metrics = Metrics(
+        var result = Evaluate(
+            new QueryBudgetOptions { MaxQueries = 1 },
             Query("SELECT 1", TimeSpan.FromMilliseconds(1)),
             Query("SELECT 2", TimeSpan.FromMilliseconds(1)));
-
-        var result = _evaluator.Evaluate(
-            new QueryBudgetOptions { MaxQueries = 1 },
-            metrics);
 
         result.Passed.Should().BeFalse();
         result.Violations.Should().ContainSingle(v =>
@@ -41,13 +35,10 @@ public class QueryBudgetEvaluatorTests
     [Fact]
     public void Fails_when_duplicates_exceeded()
     {
-        var metrics = Metrics(
+        var result = Evaluate(
+            new QueryBudgetOptions { MaxExactDuplicates = 0 },
             Query("SELECT * FROM t WHERE id = @id", TimeSpan.FromMilliseconds(1), ("@id", 1)),
             Query("SELECT * FROM t WHERE id = @id", TimeSpan.FromMilliseconds(1), ("@id", 1)));
-
-        var result = _evaluator.Evaluate(
-            new QueryBudgetOptions { MaxExactDuplicates = 0 },
-            metrics);
 
         result.Passed.Should().BeFalse();
         result.Violations.Should().Contain(v =>
@@ -60,15 +51,14 @@ public class QueryBudgetEvaluatorTests
         var queries = Enumerable.Range(1, 5)
             .Select(i => Query("SELECT * FROM t WHERE id = @id", TimeSpan.FromMilliseconds(1), ("@id", i)))
             .ToArray();
-        var metrics = Metrics(queries);
 
-        var result = _evaluator.Evaluate(
+        var result = Evaluate(
             new QueryBudgetOptions
             {
                 MaxRepeatedPatterns = 0,
                 RepeatedPatternThreshold = 5
             },
-            metrics);
+            queries);
 
         result.Passed.Should().BeFalse();
         result.Violations.Should().Contain(v =>
@@ -78,16 +68,10 @@ public class QueryBudgetEvaluatorTests
     [Fact]
     public void Fails_when_duration_exceeded()
     {
-        var metrics = Metrics(
+        var result = Evaluate(
+            new QueryBudgetOptions { MaxTotalDuration = TimeSpan.FromMilliseconds(100) },
             Query("SELECT 1", TimeSpan.FromMilliseconds(80)),
             Query("SELECT 2", TimeSpan.FromMilliseconds(80)));
-
-        var result = _evaluator.Evaluate(
-            new QueryBudgetOptions
-            {
-                MaxTotalDuration = TimeSpan.FromMilliseconds(100)
-            },
-            metrics);
 
         result.Passed.Should().BeFalse();
         result.Violations.Should().Contain(v =>
@@ -97,11 +81,7 @@ public class QueryBudgetEvaluatorTests
     [Fact]
     public void Collects_multiple_violations()
     {
-        var metrics = Metrics(
-            Query("SELECT * FROM t WHERE id = @id", TimeSpan.FromMilliseconds(120), ("@id", 1)),
-            Query("SELECT * FROM t WHERE id = @id", TimeSpan.FromMilliseconds(120), ("@id", 1)));
-
-        var result = _evaluator.Evaluate(
+        var result = Evaluate(
             new QueryBudgetOptions
             {
                 MaxQueries = 1,
@@ -109,17 +89,40 @@ public class QueryBudgetEvaluatorTests
                 MaxSlowQueries = 0,
                 SlowQueryThreshold = TimeSpan.FromMilliseconds(50)
             },
-            metrics);
+            Query("SELECT * FROM t WHERE id = @id", TimeSpan.FromMilliseconds(120), ("@id", 1)),
+            Query("SELECT * FROM t WHERE id = @id", TimeSpan.FromMilliseconds(120), ("@id", 1)));
 
         result.Violations.Should().HaveCountGreaterThanOrEqualTo(2);
     }
 
     [Fact]
+    public void The_slow_threshold_that_shaped_the_metrics_is_the_one_evaluated()
+    {
+        // 80 ms is slow under this budget and would not be under the default one. Before the
+        // budget travelled with the metrics, the threshold used to compute them and the threshold
+        // the result reported could be two different values.
+        var budget = new QueryBudgetOptions
+        {
+            SlowQueryThreshold = TimeSpan.FromMilliseconds(50),
+            MaxSlowQueries = 0
+        };
+
+        var result = Evaluate(budget, Query("SELECT 1", TimeSpan.FromMilliseconds(80)));
+
+        result.Metrics.SlowQueryCount.Should().Be(1);
+        result.Budget.Should().BeSameAs(budget);
+        result.Passed.Should().BeFalse();
+    }
+
+    [Fact]
     public void Metrics_include_slow_and_duration()
     {
-        var metrics = Metrics(
-            Query("SELECT 1", TimeSpan.FromMilliseconds(10)),
-            Query("SELECT 2", TimeSpan.FromMilliseconds(150)));
+        var metrics = _calculator.Calculate(
+            [
+                Query("SELECT 1", TimeSpan.FromMilliseconds(10)),
+                Query("SELECT 2", TimeSpan.FromMilliseconds(150))
+            ],
+            new QueryBudgetOptions());
 
         metrics.QueryCount.Should().Be(2);
         metrics.SlowQueryCount.Should().Be(1);
@@ -127,8 +130,8 @@ public class QueryBudgetEvaluatorTests
         metrics.MaximumDuration.Should().Be(TimeSpan.FromMilliseconds(150));
     }
 
-    private QueryMetrics Metrics(params RecordedQuery[] queries)
-        => _calculator.Calculate(queries, new QueryBudgetOptions());
+    private QueryBudgetResult Evaluate(QueryBudgetOptions budget, params RecordedQuery[] queries)
+        => _evaluator.Evaluate(_calculator.Calculate(queries, budget));
 
     private static RecordedQuery Query(
         string sql,

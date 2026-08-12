@@ -19,11 +19,14 @@ public sealed class DefaultQueryFingerprinter : IQueryFingerprinter
     /// whitespace-only normalizer.
     /// </param>
     public DefaultQueryFingerprinter(
-        ISqlNormalizer? structuralNormalizer = null,
-        ISqlNormalizer? exactNormalizer = null)
+        ISqlNormalizer structuralNormalizer,
+        ISqlNormalizer exactNormalizer)
     {
-        _structuralNormalizer = structuralNormalizer ?? new DefaultSqlNormalizer();
-        _exactNormalizer = exactNormalizer ?? new DefaultSqlNormalizer();
+        ArgumentNullException.ThrowIfNull(structuralNormalizer);
+        ArgumentNullException.ThrowIfNull(exactNormalizer);
+
+        _structuralNormalizer = structuralNormalizer;
+        _exactNormalizer = exactNormalizer;
     }
 
     public string StructuralFingerprint(RecordedQuery query)

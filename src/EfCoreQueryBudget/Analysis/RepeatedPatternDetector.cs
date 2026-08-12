@@ -6,64 +6,49 @@ public sealed class RepeatedPatternDetector
     private readonly IQueryFingerprinter _fingerprinter;
 
     /// <param name="normalizer">
-    /// Normalizes SQL for grouping and for the reported pattern. Pass a
+    /// Renders the pattern a group reports. Pass a
     /// <see cref="SqlNormalizationMode.MaskLiterals"/> normalizer to group executions that differ
     /// only in an inline literal.
     /// </param>
     /// <param name="fingerprinter">
     /// Computes both the structural fingerprint queries are grouped by and the exact fingerprint
-    /// variants are counted with. Defaults to one that masks only on the structural side.
+    /// variants are counted with.
     /// </param>
-    public RepeatedPatternDetector(
-        ISqlNormalizer? normalizer = null,
-        IQueryFingerprinter? fingerprinter = null)
+    public RepeatedPatternDetector(ISqlNormalizer normalizer, IQueryFingerprinter fingerprinter)
     {
-        _normalizer = normalizer ?? new DefaultSqlNormalizer();
+        ArgumentNullException.ThrowIfNull(normalizer);
+        ArgumentNullException.ThrowIfNull(fingerprinter);
 
-        // The exact fingerprint counts distinct variants within a group, so it must keep the
-        // literals the structural one may have masked away.
-        _fingerprinter = fingerprinter
-            ?? new DefaultQueryFingerprinter(_normalizer, new DefaultSqlNormalizer());
+        _normalizer = normalizer;
+        _fingerprinter = fingerprinter;
     }
 
     public IReadOnlyList<QueryGroup> Detect(
         IReadOnlyList<RecordedQuery> queries,
         int threshold = 5)
     {
-        var groups = new Dictionary<string, List<RecordedQuery>>(StringComparer.Ordinal);
+        ArgumentNullException.ThrowIfNull(queries);
 
-        foreach (var query in queries)
-        {
-            var fingerprint = _fingerprinter.StructuralFingerprint(query);
-            if (!groups.TryGetValue(fingerprint, out var list))
-            {
-                list = [];
-                groups[fingerprint] = list;
-            }
-
-            list.Add(query);
-        }
-
-        return groups
-            .Select(pair =>
+        return QueryGrouper.By(queries, _fingerprinter.StructuralFingerprint)
+            .Select(group =>
             {
                 // Variants, not parameter sets: a query with inline literals carries no parameters
                 // at all, so counting those would collapse every raw-SQL group to one variant and
                 // discard it below.
-                var variants = pair.Value
+                var variants = group.Queries
                     .Select(_fingerprinter.ExactFingerprint)
                     .Distinct(StringComparer.Ordinal)
                     .Count();
 
                 return new QueryGroup
                 {
-                    Fingerprint = pair.Key,
-                    NormalizedSql = _normalizer.Normalize(pair.Value[0].CommandText),
-                    ExecutionCount = pair.Value.Count,
+                    Fingerprint = group.Fingerprint,
+                    NormalizedSql = _normalizer.Normalize(group.Queries[0].CommandText),
+                    ExecutionCount = group.Queries.Count,
                     // Every query in the group shares a fingerprint, so they share an operation.
-                    Operation = SqlOperationClassifier.Classify(pair.Value[0].CommandText),
+                    Operation = SqlOperationClassifier.Classify(group.Queries[0].CommandText),
                     DistinctVariantCount = variants,
-                    Queries = pair.Value
+                    Queries = group.Queries
                 };
             })
             .Where(g => g.ExecutionCount >= threshold && g.DistinctVariantCount > 1)

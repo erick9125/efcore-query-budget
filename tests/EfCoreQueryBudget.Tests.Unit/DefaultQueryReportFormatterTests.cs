@@ -159,7 +159,7 @@ public class DefaultQueryReportFormatterTests
     private string Format(QueryBudgetOptions budget, RecordedQuery[] queries)
     {
         var metrics = new QueryMetricsCalculator().Calculate(queries, budget);
-        return _formatter.Format(new QueryBudgetEvaluator().Evaluate(budget, metrics));
+        return _formatter.Format(new QueryBudgetEvaluator().Evaluate(metrics));
     }
 
     private static RecordedQuery[] Reads(int count)

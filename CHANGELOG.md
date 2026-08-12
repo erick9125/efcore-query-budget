@@ -4,6 +4,12 @@
 
 ### Added
 
+- `QueryBudgetRunner`, an instantiable composition root, and `IQueryAnalysisFactory`. The three
+  abstractions the library declares — `ISqlNormalizer`, `IQueryFingerprinter` and
+  `IQueryReportFormatter` — existed as interfaces but there was no way to supply your own through
+  the public API: the static facade fixed its collaborators in static fields and four classes
+  resolved their own dependencies with `?? new DefaultSqlNormalizer()`. `QueryBudget` is now a
+  shortcut over a default runner, so nothing changes for callers that do not need to replace a piece.
 - The interception path is now covered by tests, and covered on both target frameworks. All eight
   recording entry points — reader, scalar and non-query, sync and async, plus the two failure
   callbacks — had no direct test, and the only indirect coverage lived in a `net9.0`-only project,
@@ -29,6 +35,12 @@
 
 ### Fixed
 
+- Metrics can no longer be scored against a budget that did not produce them. `Calculate` and
+  `Evaluate` each took their own `QueryBudgetOptions`, so `result.Budget` could report one budget
+  while the numbers were computed under another — the slow-query threshold, the repeat threshold and
+  the normalization mode all shape the metrics. The budget now travels on the metrics.
+- Each query is fingerprinted once per measurement instead of twice. The calculator composed two
+  detectors with two fingerprinters, and both ask for the exact fingerprint.
 - A bulk insert is no longer reported as a possible N+1. `SaveChanges` over 50 new entities emits 50
   executions of one `INSERT` shape with different values, which is the exact signature the pattern
   detector looked for, so any test writing more than a handful of rows triggered the library's
@@ -57,6 +69,14 @@
 
 ### Breaking
 
+- `QueryBudgetEvaluator.Evaluate` takes only the metrics; the budget comes from the new required
+  `QueryMetrics.Budget`. `QueryBudgetResult.Budget` is now derived from the metrics rather than
+  stored, so the two cannot disagree.
+- `DefaultQueryFingerprinter`, `ExactDuplicateDetector`, `RepeatedPatternDetector` and
+  `QueryMetricsCalculator` take their dependencies explicitly instead of defaulting them, and the
+  calculator composes from an `IQueryAnalysisFactory` rather than accepting pre-built detectors.
+- `QueryBudgetContext.Record` is internal. Capture is the interceptor's job; a public entry point
+  was mutable global state offered as API.
 - `ExactDuplicateCount` and `RepeatedPatternCount` count reads only. Repeating a read with the same
   parameters is provably redundant; repeating a write is not, so the library no longer claims it is.
   Writes and commands that are neither still appear in `ExactDuplicateGroups` and

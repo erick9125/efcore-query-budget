@@ -5,6 +5,14 @@ namespace EfCoreQueryBudget;
 /// </summary>
 public sealed record QueryMetrics
 {
+    /// <summary>
+    /// The budget these metrics were computed against. It is not a convenience copy: the slow-query
+    /// threshold, the repeat threshold and the normalization mode all shape the numbers below, so
+    /// metrics only mean anything next to the budget that produced them. Evaluation reads it from
+    /// here, which is what makes it impossible to score metrics against a different budget.
+    /// </summary>
+    public required QueryBudgetOptions Budget { get; init; }
+
     public int QueryCount { get; init; }
 
     /// <summary>

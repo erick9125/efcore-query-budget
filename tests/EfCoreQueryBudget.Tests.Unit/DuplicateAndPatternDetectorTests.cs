@@ -15,7 +15,7 @@ public class DuplicateAndPatternDetectorTests
             Query("SELECT * FROM users WHERE id = @id", ("@id", 10))
         };
 
-        var groups = new ExactDuplicateDetector().Detect(queries);
+        var groups = Exact().Detect(queries);
         groups.Should().ContainSingle();
         groups[0].ExecutionCount.Should().Be(3);
         groups[0].DistinctVariantCount.Should().Be(1);
@@ -28,7 +28,7 @@ public class DuplicateAndPatternDetectorTests
             .Select(i => Query("SELECT * FROM users WHERE id = @id", ("@id", i)))
             .ToArray();
 
-        var groups = new RepeatedPatternDetector().Detect(queries, threshold: 5);
+        var groups = Patterns().Detect(queries, threshold: 5);
         groups.Should().ContainSingle();
         groups[0].ExecutionCount.Should().Be(6);
         groups[0].DistinctVariantCount.Should().Be(6);
@@ -41,14 +41,14 @@ public class DuplicateAndPatternDetectorTests
             .Select(_ => Query("SELECT * FROM users WHERE id = @id", ("@id", 10)))
             .ToArray();
 
-        new RepeatedPatternDetector().Detect(queries, threshold: 5)
+        Patterns().Detect(queries, threshold: 5)
             .Should().BeEmpty();
     }
 
     [Fact]
     public void Inline_literals_hide_a_repeated_pattern_from_the_default_normalizer()
     {
-        new RepeatedPatternDetector().Detect(InlineLiteralNPlusOne(), threshold: 5)
+        Patterns().Detect(InlineLiteralNPlusOne(), threshold: 5)
             .Should().BeEmpty();
     }
 
@@ -86,11 +86,32 @@ public class DuplicateAndPatternDetectorTests
 
         // One variant, so it is a redundant repeat rather than an N+1.
         Masking().Detect(queries, threshold: 5).Should().BeEmpty();
-        new ExactDuplicateDetector().Detect(queries).Should().ContainSingle();
+        Exact().Detect(queries).Should().ContainSingle();
     }
 
+    private static readonly IQueryAnalysisFactory Analysis = new DefaultQueryAnalysisFactory();
+
+    private static ExactDuplicateDetector Exact() => Detector(SqlNormalizationMode.WhitespaceOnly);
+
+    private static RepeatedPatternDetector Patterns()
+        => PatternDetector(SqlNormalizationMode.WhitespaceOnly);
+
     private static RepeatedPatternDetector Masking()
-        => new(new DefaultSqlNormalizer(SqlNormalizationMode.MaskLiterals));
+        => PatternDetector(SqlNormalizationMode.MaskLiterals);
+
+    private static ExactDuplicateDetector Detector(SqlNormalizationMode mode)
+    {
+        return new ExactDuplicateDetector(
+            Analysis.CreateNormalizer(SqlNormalizationMode.WhitespaceOnly),
+            Analysis.CreateFingerprinter(mode));
+    }
+
+    private static RepeatedPatternDetector PatternDetector(SqlNormalizationMode mode)
+    {
+        return new RepeatedPatternDetector(
+            Analysis.CreateNormalizer(mode),
+            Analysis.CreateFingerprinter(mode));
+    }
 
     private static RecordedQuery[] InlineLiteralNPlusOne()
     {

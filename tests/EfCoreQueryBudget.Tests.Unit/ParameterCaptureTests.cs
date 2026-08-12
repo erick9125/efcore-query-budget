@@ -107,7 +107,7 @@ public class ParameterCaptureTests
 
     private static string Fingerprint(object? captured)
     {
-        return new DefaultQueryFingerprinter().ExactFingerprint(new RecordedQuery
+        return new DefaultQueryAnalysisFactory().CreateFingerprinter(SqlNormalizationMode.WhitespaceOnly).ExactFingerprint(new RecordedQuery
         {
             CommandText = "SELECT * FROM t WHERE p = @p",
             Parameters = new Dictionary<string, object?> { ["@p"] = captured },
@@ -126,7 +126,7 @@ public class ParameterCaptureTests
 
         var options = new QueryBudgetOptions { MaxQueries = 0, ParameterDisplayMode = mode };
         var metrics = new QueryMetricsCalculator().Calculate([query, query], options);
-        var result = new QueryBudgetEvaluator().Evaluate(options, metrics);
+        var result = new QueryBudgetEvaluator().Evaluate(metrics);
 
         return new DefaultQueryReportFormatter().Format(result);
     }

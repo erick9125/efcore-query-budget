@@ -95,13 +95,17 @@ public static class QueryBudgetContext
     /// <summary>
     /// Records a query against the scope on the current execution flow, if any.
     /// </summary>
-    public static void Record(RecordedQuery query)
+    /// <remarks>
+    /// Internal on purpose: capture is the interceptor's job, and a public entry point would be
+    /// mutable global state offered as API.
+    /// </remarks>
+    internal static void Record(RecordedQuery query)
         => Record(query, ScopeAttributionMode.AsyncLocalOnly);
 
     /// <summary>
     /// Records a query against the scope resolved under the given <paramref name="mode"/>, if any.
     /// </summary>
-    public static void Record(RecordedQuery query, ScopeAttributionMode mode)
+    internal static void Record(RecordedQuery query, ScopeAttributionMode mode)
     {
         if (TryGetScope(mode, out var scope))
         {
