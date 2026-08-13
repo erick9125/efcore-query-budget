@@ -83,21 +83,27 @@ public sealed class ExecutionContextFlowTests
 
     private sealed class TestHostFixture : IDisposable
     {
-        private readonly SqliteConnection _connection;
+        private readonly SqliteConnection _keepAlive;
 
         public TestHostFixture(bool preserveExecutionContext)
         {
-            _connection = new SqliteConnection(
-                $"Data Source=file:flow-{Guid.NewGuid():N}?mode=memory&cache=shared");
-            _connection.Open();
+            // Every context opens its own connection to the same shared-cache database, rather than
+            // sharing one instance. SqliteConnection is not thread-safe, and these tests overlap
+            // requests on purpose: a shared instance corrupts its internal command list under load.
+            // The connection below is only held open so the in-memory database outlives the
+            // requests that touch it.
+            var connectionString =
+                $"Data Source=file:flow-{Guid.NewGuid():N}?mode=memory&cache=shared";
 
-            var connection = _connection;
+            _keepAlive = new SqliteConnection(connectionString);
+            _keepAlive.Open();
+
             var builder = new WebHostBuilder()
                 .ConfigureServices(services =>
                 {
                     services.AddEfCoreQueryBudget();
                     services.AddDbContext<FlowDbContext>((serviceProvider, options) => options
-                        .UseSqlite(connection)
+                        .UseSqlite(connectionString)
                         .AddInterceptors(
                             serviceProvider.GetRequiredService<QueryBudgetCommandInterceptor>()));
                 })
@@ -124,7 +130,7 @@ public sealed class ExecutionContextFlowTests
         public void Dispose()
         {
             Server.Dispose();
-            _connection.Dispose();
+            _keepAlive.Dispose();
         }
     }
 

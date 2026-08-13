@@ -75,7 +75,7 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --no-restore --configuration Release -p:Version=${{ steps.meta.outputs.version }}
+        run: dotnet build --no-restore --configuration Release -p:MinVerVersionOverride=${{ steps.meta.outputs.version }}
 
       - name: Unit tests
         run: >
@@ -96,7 +96,7 @@ jobs:
         run: >
           dotnet pack src/EfCoreQueryBudget/EfCoreQueryBudget.csproj
           --no-build --configuration Release
-          -p:Version=${{ steps.meta.outputs.version }}
+          -p:MinVerVersionOverride=${{ steps.meta.outputs.version }}
           --output artifacts
 
       - name: Verify the package carries docs and symbols for every target framework
