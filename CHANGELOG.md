@@ -1,165 +1,74 @@
 # Changelog
 
-## Unreleased
+## 0.1.0 — 2026-08-12
+
+First release. Nothing was published before this, so there is nothing to break and no migration to
+do; the entries below describe what the library does rather than how it changed.
 
 ### Added
 
-- `AssertAsync<T>` returns what the action produced, so a budget can wrap a call without splitting
-  it in two, and every `AssertAsync`/`MeasureAsync` takes an optional `CancellationToken`.
-- Analyzers and API tracking: `.editorconfig`, `EnableNETAnalyzers` with `latest-recommended`,
-  `EnforceCodeStyleInBuild`, and `Microsoft.CodeAnalysis.PublicApiAnalyzers` with
-  `PublicAPI.Shipped.txt`/`Unshipped.txt`, so a change to the public surface shows up as a diff in
-  the pull request. Package versions move to Central Package Management in
-  `Directory.Packages.props`, still pinned per target framework.
-- `QueryBudgetRunner`, an instantiable composition root, and `IQueryAnalysisFactory`. The three
-  abstractions the library declares — `ISqlNormalizer`, `IQueryFingerprinter` and
-  `IQueryReportFormatter` — existed as interfaces but there was no way to supply your own through
-  the public API: the static facade fixed its collaborators in static fields and four classes
-  resolved their own dependencies with `?? new DefaultSqlNormalizer()`. `QueryBudget` is now a
-  shortcut over a default runner, so nothing changes for callers that do not need to replace a piece.
-- The interception path is now covered by tests, and covered on both target frameworks. All eight
-  recording entry points — reader, scalar and non-query, sync and async, plus the two failure
-  callbacks — had no direct test, and the only indirect coverage lived in a `net9.0`-only project,
-  so the `net8.0` assembly shipped without ever having executed a capture in any test.
-- `QueryBudgetOptions.MaxExecutionsPerPattern` bounds the largest repeated pattern, reported as
-  `QueryMetrics.MaximumPatternExecutions`. `MaxRepeatedPatterns` counts groups, so five executions
-  in one place and five thousand in another both counted as one; the size of an N+1, which is what
-  it costs, could not be limited at all.
-- `QueryGroup.Operation` says whether a group reads, writes, or does neither.
-- `QueryBudgetOptions.MaxRecordedQueries` caps how many queries a scope retains for analysis
-  (default `10_000`, `null` for no limit). A long-running scope no longer grows without bound.
-  Retention is never cut silently: the number dropped is reported as
-  `QueryMetrics.DiscardedQueryCount` and warned about in the report. Only retention is capped —
-  `QueryCount`, `TotalDuration`, `MaximumDuration` and `SlowQueryCount` still cover every command
-  the scope accepted, so a budget cannot pass because the scope stopped retaining.
-- `QueryBudgetOptions.SqlNormalization` selects how SQL is normalized before queries are grouped
-  into patterns. The new `SqlNormalizationMode.MaskLiterals` replaces inline string and numeric
-  literals with `?` and collapses variable-length `IN` lists, so raw SQL, `FromSqlRaw` and
-  provider-inlined constants can be grouped at all. It leaves parameters, quoted identifiers,
-  `NULL` and comments alone, and applies only to the structural fingerprint — exact-duplicate
-  detection never masks, so two queries differing in a value stay two queries. The default,
-  `WhitespaceOnly`, is the previous behavior.
+- **Query budgets in tests.** `QueryBudget.AssertAsync` runs an action inside a measurement scope
+  and throws `QueryBudgetExceededException` when a limit is exceeded, with the report as the
+  message. `AssertAsync<T>` returns what the action produced, and `MeasureAsync` measures without
+  throwing. All of them take an optional `CancellationToken`.
+- **Limits**, all optional: `MaxQueries`, `MaxExactDuplicates`, `MaxRepeatedPatterns`,
+  `MaxExecutionsPerPattern`, `MaxSlowQueries`, `MaxTotalDuration` and `MaxSingleQueryDuration`.
+  `MaxRepeatedPatterns` bounds how many places repeat; `MaxExecutionsPerPattern` bounds how big the
+  worst one is.
+- **Capture** through a `DbCommandInterceptor`, registered with `AddEfCoreQueryBudget`. When no
+  scope is active the interceptor returns immediately.
+- **Detection** of exact duplicates and of repeated patterns, the latter reported as a *possible*
+  N+1 — never as a confirmed one.
+- **Reports** that name the limit, the budget and the actual value, and show the offending query
+  groups. Parameter values are hidden by default.
+- **Extensibility.** `QueryBudgetRunner` is the composition root; supply your own
+  `IQueryAnalysisFactory` to replace the `ISqlNormalizer` or the `IQueryFingerprinter`, or your own
+  `IQueryReportFormatter` to change the report. `QueryBudget` is a shortcut over a default runner.
+- Targets `net8.0` and `net9.0`, each built and tested against its own EF Core major. An ASP.NET
+  Core + PostgreSQL sample and Testcontainers-backed integration tests ship with the repository.
 
-### Fixed
+### Behavior worth knowing
 
-- The report no longer formats numbers according to the machine's locale. It was built with
-  interpolated strings, so a scope label or an execution count could come out with a comma decimal
-  separator depending on where the tests ran.
-- A parameter value rendered in `Full` mode is bounded and no longer splits a surrogate pair, and an
-  unknown parameter type is fingerprinted through its invariant representation where it has one.
-  Captured values were already bounded; these paths are reached by queries built by hand.
-- Metrics can no longer be scored against a budget that did not produce them. `Calculate` and
-  `Evaluate` each took their own `QueryBudgetOptions`, so `result.Budget` could report one budget
-  while the numbers were computed under another — the slow-query threshold, the repeat threshold and
-  the normalization mode all shape the metrics. The budget now travels on the metrics.
-- Each query is fingerprinted once per measurement instead of twice. The calculator composed two
-  detectors with two fingerprinters, and both ask for the exact fingerprint.
-- A bulk insert is no longer reported as a possible N+1. `SaveChanges` over 50 new entities emits 50
-  executions of one `INSERT` shape with different values, which is the exact signature the pattern
-  detector looked for, so any test writing more than a handful of rows triggered the library's
-  headline warning on normal work.
-- Parameter values are no longer held by reference for the life of the scope. They are projected at
-  capture time into an immutable `ParameterSnapshot`, so a large payload is not pinned, personal
-  data does not outlive the command that used it, and a mutable value can no longer change between
-  the command running and the fingerprint being computed — which used to move an already-executed
-  query into a different group. Binary payloads keep only their length and a SHA-256; long strings
-  and arrays keep a bounded rendering plus a hash of the whole, so two values sharing a prefix are
-  still told apart.
-- A repeated pattern in SQL carrying inline literals is now detectable. Two things hid it: the
-  normalizer gave every execution a different structural fingerprint, and the pattern filter
-  required more than one distinct *parameter set* — of which a query with no parameters has exactly
-  one. Fixing only the first would have changed nothing observable.
-- Commands are no longer attributed to a scope on another execution flow. The previous behavior
-  claimed any flow-less command whenever exactly one scope was active process-wide, so a parallel
-  test, a hosted service or a background seed would be counted against the active budget. It is
-  now opt-in as `ScopeAttributionMode.SingleActiveScopeFallback`; the default is `AsyncLocalOnly`.
-  For `WebApplicationFactory`, set `factory.Server.PreserveExecutionContext = true` before creating
-  the client.
-- A second capture of the same command execution is discarded instead of doubling every metric.
-  EF Core invokes an interceptor once per attachment, and a test host that re-registers
-  `AddDbContext` on top of the application's own ends up attaching it twice. The discarded count
-  is reported as `QueryMetrics.DuplicateCaptureCount` and warned about in the report.
+These are the decisions most likely to surprise you. Each is deliberate.
 
-### Breaking
+- **Attribution follows the execution flow.** A command is counted against the scope on its own
+  async flow, and commands outside any scope are ignored, so a parallel test or a hosted service
+  cannot land in your budget. For `WebApplicationFactory`, set
+  `factory.Server.PreserveExecutionContext = true` before creating the client, or `TestServer` will
+  run the request outside your scope and the budget will see nothing.
+  `ScopeAttributionMode.SingleActiveScopeFallback` relaxes this and is opt-in, because it cannot
+  tell your command from anyone else's.
+- **Duplicates and patterns cover reads only.** Running the same `SELECT` with the same parameters
+  twice returns the same rows, so the second execution is provably wasted. Running the same `INSERT`
+  twice is not: it adds two rows. A `SaveChanges` over 50 new entities emits 50 executions of one
+  `INSERT` shape — the exact signature of an N+1, and normal work. Writes are still detected and
+  reported, under a heading that does not call them a defect, and every `QueryGroup` carries its
+  `Operation`.
+- **Inline literals need `SqlNormalization = MaskLiterals`.** Patterns group by normalized SQL, and
+  the default only collapses whitespace, so raw SQL or `FromSqlRaw` gives every execution its own
+  fingerprint and no pattern is found. Masking applies to the structural fingerprint only — the
+  exact one keeps literals, or two queries differing in a value would be called the same query. The
+  trade-off is that meaningful literals collapse too, so `LIMIT 10` and `LIMIT 20` become one
+  pattern.
+- **Retention is capped, counting is not.** `MaxRecordedQueries` (default `10_000`) bounds how many
+  queries a scope holds. Past it, commands are still counted and timed, so `QueryCount`,
+  `TotalDuration`, `MaximumDuration` and `SlowQueryCount` always cover everything that ran and a
+  budget can never pass because the scope stopped looking. The number dropped is reported as
+  `DiscardedQueryCount`; only the duplicate and pattern groups cover the retained sample.
+- **Parameter values are projected, not retained.** Capture stores an immutable `ParameterSnapshot`
+  rather than the caller's object, so a large payload is not pinned and personal data does not
+  outlive the command. Binary payloads keep only their length and a hash; long strings and arrays
+  keep a bounded rendering plus a hash of the whole, so two values sharing a prefix are still told
+  apart. Reading `RecordedQuery.Parameters` from a captured command should expect it; values you put
+  there yourself are untouched.
+- **A repeat capture of one execution is discarded.** EF Core invokes an interceptor once per
+  attachment, so a test host that re-registers `AddDbContext` on top of the application's own would
+  otherwise double every metric. The count surfaces as `DuplicateCaptureCount` and as a warning; a
+  non-zero value means the registration needs fixing.
+- **Timing** comes from EF Core's command-end durations, not from a clock around the interceptor.
 
-- `QueryMetrics.ExactDuplicateCount` is now `RedundantExecutionCount`. The number was never a count
-  of duplicates: it is executions past the first in each group, so six identical reads reported five.
-  `QueryBudgetOptions.MaxExactDuplicates` keeps its name, since it names the limit and not the metric.
-- `RecordedQuery.ConnectionId` is a `Guid` instead of a `string`, which also drops a `ToString` per
-  captured command. `QueryScope.Id` is gone: nothing read it once scope propagation was solved with
-  `PreserveExecutionContext`.
-- Removed the `AssertAsync(action, options)` overload, which took the same two arguments as
-  `AssertAsync(options, action)` in the opposite order.
-- Fingerprints are shorter: grouping uses `XxHash128` rather than SHA-256, since it identifies a
-  query rather than protecting anything. The content hash in captured parameters stays on SHA-256.
-- `QueryBudgetViolation` is abstract, with `CountBudgetViolation` and `DurationBudgetViolation`
-  carrying `int` and `TimeSpan` instead of two boxed `object`s. Reading `Actual` or `Budget` now
-  means matching the kind first, which is what the type system can check and a boxed value could
-  not. `Label` is gone from the model: the evaluator decided whether a limit was broken and also
-  wrote the text the report printed, so the report's wording could not be changed even by replacing
-  `IQueryReportFormatter`. The labels are unchanged and now live in the default formatter.
-- `QueryBudgetEvaluator.Evaluate` takes only the metrics; the budget comes from the new required
-  `QueryMetrics.Budget`. `QueryBudgetResult.Budget` is now derived from the metrics rather than
-  stored, so the two cannot disagree.
-- `DefaultQueryFingerprinter`, `ExactDuplicateDetector`, `RepeatedPatternDetector` and
-  `QueryMetricsCalculator` take their dependencies explicitly instead of defaulting them, and the
-  calculator composes from an `IQueryAnalysisFactory` rather than accepting pre-built detectors.
-- `QueryBudgetContext.Record` is internal. Capture is the interceptor's job; a public entry point
-  was mutable global state offered as API.
-- `ExactDuplicateCount` and `RepeatedPatternCount` count reads only. Repeating a read with the same
-  parameters is provably redundant; repeating a write is not, so the library no longer claims it is.
-  Writes and commands that are neither still appear in `ExactDuplicateGroups` and
-  `RepeatedPatternGroups`, tagged with their `Operation`, and in the report under their own heading.
-- Captured parameter values may now arrive as `ParameterSnapshot` rather than as the original
-  object. Code reading `RecordedQuery.Parameters` from a captured command should handle it; values
-  put there by hand are untouched, and immutable scalars and short strings are still stored as
-  themselves.
-- `QueryMetricsCalculator.Calculate` takes an optional third argument, `QueryCaptureTotals`. Omit it
-  and the aggregates are derived from the queries exactly as before.
-- `QueryGroup.DistinctParameterSetCount` is now `QueryGroup.DistinctVariantCount`, and it counts
-  distinct exact fingerprints rather than distinct parameter sets. For a parameterized query the
-  number is the same as before; for one with inline literals it is the only thing that can tell the
-  executions apart. Reports say `Distinct variants: N` instead of `Distinct parameter sets: N`.
-- Removed `DefaultQueryFingerprinter.ParameterSetKey`. Nothing calls it now that variants are
-  counted by exact fingerprint, and it was the one place bypassing the `IQueryFingerprinter`
-  abstraction.
-- `DefaultQueryFingerprinter` takes a second normalizer, `exactNormalizer`, so the structural and
-  exact fingerprints can normalize differently. Both parameters are optional and default to the
-  previous behavior.
-- Renamed the package, assembly and root namespace, aligning with the already-published
-  `erick9125.AuditableOperations`. Nothing was released under the old identity, so no consumer is
-  affected.
+### Notes
 
-  | | Before | After |
-  |---|---|---|
-  | Package | `ErickMorales.EntityFrameworkCore.QueryBudget` | `erick9125.EfCoreQueryBudget` |
-  | Assembly, namespace | `ErickMorales.EntityFrameworkCore.QueryBudget` | `EfCoreQueryBudget` |
-
-  This also resolves the type↔namespace collision flagged by CA1724: the `QueryBudget` facade no
-  longer sits inside a namespace of the same name, so call sites keep reading
-  `QueryBudget.AssertAsync(...)` while only the `using` changes.
-
-- Removed `QueryBudgetLibraryOptions.SlowQueryThreshold` and
-  `QueryBudgetLibraryOptions.ParameterDisplayMode`. Neither was ever read: the values were
-  silently discarded while the README and the sample taught you to set them. Both settings
-  already exist on `QueryBudgetOptions`, where they do take effect — move them there.
-  `AddEfCoreQueryBudget` now configures capture only, via `Enabled`.
-
-### Changed
-
-- The package version now comes from the git tag via MinVer instead of a hardcoded `<Version>`,
-  and a tag push publishes to NuGet through the new release workflow.
-- CI checks formatting, runs the unit suite against both target frameworks, and fails if a packed
-  target framework is missing its assembly, XML documentation or symbols.
-- The package now targets `net8.0` and `net9.0` instead of `net9.0` only.
-- `QueryBudget.Core` was merged into the main assembly. The package previously carried
-  `Core.dll` without its XML documentation and without a PDB, so most of the public API had
-  no IntelliSense and could not be stepped into. Namespaces are unchanged.
-
-## 0.1.0
-
-- Capture EF Core database commands inside isolated test scopes.
-- Enforce configurable budgets for query count, exact duplicates, repeated patterns, slow queries, and total database time.
-- Support `AssertAsync` and `MeasureAsync`.
-- Integrate through `DbCommandInterceptor` and `AddEfCoreQueryBudget`.
-- Include ASP.NET Core + PostgreSQL sample and Testcontainers-backed integration tests.
+- The package version is derived from the git tag through MinVer; a tag push publishes to NuGet.
+- The public surface is tracked in `PublicAPI.Shipped.txt`, so any change to it appears as a diff in
+  the pull request.

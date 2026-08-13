@@ -499,9 +499,12 @@ Usa `QueryBudgetLibraryOptions.Enabled = false` cuando quieras el interceptor re
 
 - Captura de comandos EF Core con `DbCommandInterceptor`
 - Scopes aislados con `AsyncLocal` (scopes anidados rechazados)
-- Conteo, duplicados exactos, patrones repetidos, consultas lentas y duraciones
+- Conteo, ejecuciones redundantes, patrones repetidos, consultas lentas y duraciones
 - Presupuestos configurables y mensajes de excepción accionables
-- `AssertAsync` y `MeasureAsync`
+- `AssertAsync` y `MeasureAsync`, con `CancellationToken` y un `AssertAsync<T>` que devuelve valor
+- Enmascarado de literales para SQL crudo, para encontrar patrones donde el proveedor inlinea constantes
+- Retención acotada que nunca encoge los números sobre los que se juzga un presupuesto
+- Normalizador, fingerprinter y formateador de informe sustituibles vía `QueryBudgetRunner`
 - Sample ASP.NET Core + PostgreSQL
 - Tests unitarios, de concurrencia e integración con Testcontainers
 

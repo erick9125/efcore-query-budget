@@ -493,9 +493,12 @@ Set `QueryBudgetLibraryOptions.Enabled = false` when you want the interceptor re
 
 - EF Core command capture via `DbCommandInterceptor`
 - Isolated `AsyncLocal` scopes (nested scopes rejected)
-- Query count, exact duplicates, repeated patterns, slow queries, durations
+- Query count, redundant executions, repeated patterns, slow queries, durations
 - Configurable budgets and actionable exception messages
-- `AssertAsync` and `MeasureAsync`
+- `AssertAsync` and `MeasureAsync`, with a `CancellationToken` and a value-returning `AssertAsync<T>`
+- Literal masking for raw SQL, so patterns are found where the provider inlines constants
+- Bounded retention that never shrinks the numbers a budget is judged on
+- Replaceable normalizer, fingerprinter and report formatter through `QueryBudgetRunner`
 - ASP.NET Core + PostgreSQL sample
 - Unit, concurrency, and Testcontainers integration tests
 
