@@ -45,9 +45,10 @@ public sealed class DefaultQueryReportFormatter : IQueryReportFormatter
 
         foreach (var violation in result.Violations)
         {
-            lines.AppendLine(violation.Label);
-            lines.AppendLine($"  Budget: <= {FormatBudgetValue(violation)}");
-            lines.AppendLine($"  Actual:   {FormatActualValue(violation)}");
+            var (budget, actual) = FormatValues(violation);
+            lines.AppendLine(Label(violation.Type));
+            lines.AppendLine($"  Budget: <= {budget}");
+            lines.AppendLine($"  Actual:   {actual}");
             lines.AppendLine();
         }
 
@@ -137,23 +138,44 @@ public sealed class DefaultQueryReportFormatter : IQueryReportFormatter
         }
     }
 
-    private static string FormatBudgetValue(QueryBudgetViolation violation)
+    /// <summary>
+    /// How a violation reads. It belongs here rather than on the violation itself: the evaluator
+    /// decides whether a limit was broken, not how to say so.
+    /// </summary>
+    private static string Label(QueryBudgetViolationType type)
     {
-        return violation.Budget switch
+        return type switch
         {
-            TimeSpan ts => $"{ts.TotalMilliseconds.ToString("0.###", CultureInfo.InvariantCulture)} ms",
-            _ => Convert.ToString(violation.Budget, CultureInfo.InvariantCulture) ?? string.Empty
+            QueryBudgetViolationType.QueryCountExceeded => "Query count",
+            QueryBudgetViolationType.ExactDuplicatesExceeded => "Exact duplicates",
+            QueryBudgetViolationType.RepeatedPatternsExceeded => "Repeated query patterns",
+            QueryBudgetViolationType.PatternExecutionsExceeded => "Executions in a single pattern",
+            QueryBudgetViolationType.SlowQueriesExceeded => "Slow queries",
+            QueryBudgetViolationType.TotalDurationExceeded => "Total database time",
+            QueryBudgetViolationType.SingleQueryDurationExceeded => "Single query duration",
+            _ => type.ToString()
         };
     }
 
-    private static string FormatActualValue(QueryBudgetViolation violation)
+    private static (string Budget, string Actual) FormatValues(QueryBudgetViolation violation)
     {
-        return violation.Actual switch
+        return violation switch
         {
-            TimeSpan ts => $"{ts.TotalMilliseconds.ToString("0.###", CultureInfo.InvariantCulture)} ms",
-            _ => Convert.ToString(violation.Actual, CultureInfo.InvariantCulture) ?? string.Empty
+            CountBudgetViolation count => (
+                count.Budget.ToString(CultureInfo.InvariantCulture),
+                count.Actual.ToString(CultureInfo.InvariantCulture)),
+            DurationBudgetViolation duration => (
+                Milliseconds(duration.Budget),
+                Milliseconds(duration.Actual)),
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(violation),
+                violation.GetType().Name,
+                "Unknown budget violation kind.")
         };
     }
+
+    private static string Milliseconds(TimeSpan value)
+        => $"{value.TotalMilliseconds.ToString("0.###", CultureInfo.InvariantCulture)} ms";
 
     private static string FormatParameters(
         IReadOnlyDictionary<string, object?> parameters,

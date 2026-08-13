@@ -76,6 +76,7 @@ public class DetectorSemanticsTests
             new QueryBudgetOptions { MaxExecutionsPerPattern = 10 });
 
         var violation = result.Violations
+            .OfType<CountBudgetViolation>()
             .Should().ContainSingle(v => v.Type == QueryBudgetViolationType.PatternExecutionsExceeded)
             .Subject;
 

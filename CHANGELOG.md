@@ -69,6 +69,12 @@
 
 ### Breaking
 
+- `QueryBudgetViolation` is abstract, with `CountBudgetViolation` and `DurationBudgetViolation`
+  carrying `int` and `TimeSpan` instead of two boxed `object`s. Reading `Actual` or `Budget` now
+  means matching the kind first, which is what the type system can check and a boxed value could
+  not. `Label` is gone from the model: the evaluator decided whether a limit was broken and also
+  wrote the text the report printed, so the report's wording could not be changed even by replacing
+  `IQueryReportFormatter`. The labels are unchanged and now live in the default formatter.
 - `QueryBudgetEvaluator.Evaluate` takes only the metrics; the budget comes from the new required
   `QueryMetrics.Budget`. `QueryBudgetResult.Budget` is now derived from the metrics rather than
   stored, so the two cannot disagree.

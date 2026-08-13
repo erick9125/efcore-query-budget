@@ -17,73 +17,56 @@ public sealed class QueryBudgetEvaluator
         var budget = metrics.Budget;
         var violations = new List<QueryBudgetViolation>();
 
-        if (budget.MaxQueries is int maxQueries && metrics.QueryCount > maxQueries)
+        void Count(int? limit, int actual, QueryBudgetViolationType type)
         {
-            violations.Add(new QueryBudgetViolation(
-                QueryBudgetViolationType.QueryCountExceeded,
-                maxQueries,
-                metrics.QueryCount,
-                "Query count"));
+            if (limit is int maximum && actual > maximum)
+            {
+                violations.Add(new CountBudgetViolation(type, maximum, actual));
+            }
         }
 
-        if (budget.MaxExactDuplicates is int maxExact
-            && metrics.ExactDuplicateCount > maxExact)
+        void Duration(TimeSpan? limit, TimeSpan actual, QueryBudgetViolationType type)
         {
-            violations.Add(new QueryBudgetViolation(
-                QueryBudgetViolationType.ExactDuplicatesExceeded,
-                maxExact,
-                metrics.ExactDuplicateCount,
-                "Exact duplicates"));
+            if (limit is TimeSpan maximum && actual > maximum)
+            {
+                violations.Add(new DurationBudgetViolation(type, maximum, actual));
+            }
         }
 
-        if (budget.MaxRepeatedPatterns is int maxPatterns
-            && metrics.RepeatedPatternCount > maxPatterns)
-        {
-            violations.Add(new QueryBudgetViolation(
-                QueryBudgetViolationType.RepeatedPatternsExceeded,
-                maxPatterns,
-                metrics.RepeatedPatternCount,
-                "Repeated query patterns"));
-        }
+        Count(
+            budget.MaxQueries,
+            metrics.QueryCount,
+            QueryBudgetViolationType.QueryCountExceeded);
 
-        if (budget.MaxExecutionsPerPattern is int maxPerPattern
-            && metrics.MaximumPatternExecutions > maxPerPattern)
-        {
-            violations.Add(new QueryBudgetViolation(
-                QueryBudgetViolationType.PatternExecutionsExceeded,
-                maxPerPattern,
-                metrics.MaximumPatternExecutions,
-                "Executions in a single pattern"));
-        }
+        Count(
+            budget.MaxExactDuplicates,
+            metrics.ExactDuplicateCount,
+            QueryBudgetViolationType.ExactDuplicatesExceeded);
 
-        if (budget.MaxSlowQueries is int maxSlow && metrics.SlowQueryCount > maxSlow)
-        {
-            violations.Add(new QueryBudgetViolation(
-                QueryBudgetViolationType.SlowQueriesExceeded,
-                maxSlow,
-                metrics.SlowQueryCount,
-                "Slow queries"));
-        }
+        Count(
+            budget.MaxRepeatedPatterns,
+            metrics.RepeatedPatternCount,
+            QueryBudgetViolationType.RepeatedPatternsExceeded);
 
-        if (budget.MaxTotalDuration is TimeSpan maxTotal
-            && metrics.TotalDuration > maxTotal)
-        {
-            violations.Add(new QueryBudgetViolation(
-                QueryBudgetViolationType.TotalDurationExceeded,
-                maxTotal,
-                metrics.TotalDuration,
-                "Total database time"));
-        }
+        Count(
+            budget.MaxExecutionsPerPattern,
+            metrics.MaximumPatternExecutions,
+            QueryBudgetViolationType.PatternExecutionsExceeded);
 
-        if (budget.MaxSingleQueryDuration is TimeSpan maxSingle
-            && metrics.MaximumDuration > maxSingle)
-        {
-            violations.Add(new QueryBudgetViolation(
-                QueryBudgetViolationType.SingleQueryDurationExceeded,
-                maxSingle,
-                metrics.MaximumDuration,
-                "Single query duration"));
-        }
+        Count(
+            budget.MaxSlowQueries,
+            metrics.SlowQueryCount,
+            QueryBudgetViolationType.SlowQueriesExceeded);
+
+        Duration(
+            budget.MaxTotalDuration,
+            metrics.TotalDuration,
+            QueryBudgetViolationType.TotalDurationExceeded);
+
+        Duration(
+            budget.MaxSingleQueryDuration,
+            metrics.MaximumDuration,
+            QueryBudgetViolationType.SingleQueryDurationExceeded);
 
         return new QueryBudgetResult
         {

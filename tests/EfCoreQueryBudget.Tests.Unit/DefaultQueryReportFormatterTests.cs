@@ -39,6 +39,44 @@ public class DefaultQueryReportFormatterTests
         report.Should().Contain("Actual:   5");
     }
 
+    [Theory]
+    [InlineData("Query count")]
+    [InlineData("Exact duplicates")]
+    [InlineData("Repeated query patterns")]
+    [InlineData("Executions in a single pattern")]
+    [InlineData("Slow queries")]
+    [InlineData("Total database time")]
+    [InlineData("Single query duration")]
+    public void Every_limit_keeps_its_label(string label)
+    {
+        // The labels moved out of the evaluator and into this formatter; the report must read
+        // exactly as it did before.
+        var budget = new QueryBudgetOptions
+        {
+            MaxQueries = 1,
+            MaxExactDuplicates = 0,
+            MaxRepeatedPatterns = 0,
+            MaxExecutionsPerPattern = 2,
+            MaxSlowQueries = 0,
+            MaxTotalDuration = TimeSpan.FromMilliseconds(10),
+            MaxSingleQueryDuration = TimeSpan.FromMilliseconds(10),
+            SlowQueryThreshold = TimeSpan.FromMilliseconds(50),
+            RepeatedPatternThreshold = 5
+        };
+
+        var queries = Enumerable.Range(0, 6)
+            .Select(i => new RecordedQuery
+            {
+                CommandText = "SELECT * FROM users WHERE id = @id",
+                Parameters = new Dictionary<string, object?> { ["@id"] = i == 0 ? 1 : i },
+                Duration = TimeSpan.FromMilliseconds(100),
+                Timestamp = DateTimeOffset.UnixEpoch
+            })
+            .ToArray();
+
+        Format(budget, queries).Should().Contain(label);
+    }
+
     [Fact]
     public void A_duration_violation_is_shown_in_milliseconds()
     {
