@@ -52,7 +52,7 @@ public sealed class QueryMetricsCalculator
         // Only reads reach the budget. Repeating a read with the same parameters returns the same
         // rows, so the extra execution is provably wasted; repeating a write is not — two identical
         // inserts add two rows. Writes stay in the groups below so the report can still show them.
-        var exactDuplicateCount = exactDuplicateGroups
+        var redundantExecutionCount = exactDuplicateGroups
             .Where(g => g.Operation == QueryOperation.Read)
             .Sum(g => g.ExecutionCount - 1);
 
@@ -82,7 +82,7 @@ public sealed class QueryMetricsCalculator
         {
             Budget = options,
             QueryCount = totals?.ExecutionCount ?? queries.Count,
-            ExactDuplicateCount = exactDuplicateCount,
+            RedundantExecutionCount = redundantExecutionCount,
             RepeatedPatternCount = readPatternGroups.Length,
             MaximumPatternExecutions = readPatternGroups.Length == 0
                 ? 0

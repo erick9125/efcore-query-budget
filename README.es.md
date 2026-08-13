@@ -182,9 +182,22 @@ var measurement = await QueryBudget.MeasureAsync(async () =>
 });
 
 Console.WriteLine(measurement.Metrics.QueryCount);
-Console.WriteLine(measurement.Metrics.ExactDuplicateCount);
+Console.WriteLine(measurement.Metrics.RedundantExecutionCount);
 Console.WriteLine(measurement.Metrics.RepeatedPatternCount);
 Console.WriteLine(measurement.Metrics.TotalDuration);
+```
+
+### Afirmar y quedarse con el resultado
+
+`AssertAsync` tiene también una forma que devuelve lo que produjo la acción, así que un presupuesto
+puede envolver una llamada sin partirla en dos. Las dos formas aceptan un `CancellationToken`
+opcional.
+
+```csharp
+var orders = await QueryBudget.AssertAsync(
+    new QueryBudgetOptions { MaxQueries = 5 },
+    () => orderService.GetOrdersAsync(),
+    cancellationToken);
 ```
 
 ### Test HTTP con WebApplicationFactory
@@ -331,7 +344,7 @@ siendo dos queries. El precio es que un literal con significado también colapsa
 | Métrica | Significado |
 |---|---|
 | `QueryCount` | Comandos atribuidos al scope |
-| `ExactDuplicateCount` | Ejecuciones exactas redundantes de lectura |
+| `RedundantExecutionCount` | Ejecuciones de lectura que sobraban |
 | `RepeatedPatternCount` | Grupos de patrón repetido de lectura |
 | `MaximumPatternExecutions` | Ejecuciones del mayor patrón repetido de lectura |
 | `SlowQueryCount` | Comandos en o por encima del umbral lento |
@@ -349,7 +362,7 @@ demostrablemente desperdiciado. Ejecutar el mismo `INSERT` dos veces no lo es: a
 emite 50 ejecuciones de una misma forma de `INSERT` — la firma exacta de un N+1, y no un defecto.
 
 Así que las escrituras y todo lo que no es ni lectura ni escritura (ajustes de sesión, control de
-transacción, DDL) quedan fuera de `ExactDuplicateCount` y `RepeatedPatternCount`. Se siguen
+transacción, DDL) quedan fuera de `RedundantExecutionCount` y `RepeatedPatternCount`. Se siguen
 detectando y se siguen mostrando, bajo un encabezado propio y sin la etiqueta de posible N+1:
 
 ```text

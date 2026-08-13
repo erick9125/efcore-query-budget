@@ -36,16 +36,35 @@ public sealed class QueryBudgetRunner
     /// Runs <paramref name="action"/> inside a measurement scope and throws
     /// <see cref="QueryBudgetExceededException"/> when the budget is exceeded.
     /// </summary>
-    public async Task AssertAsync(QueryBudgetOptions options, Func<Task> action)
+    public async Task AssertAsync(
+        QueryBudgetOptions options,
+        Func<Task> action,
+        CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(action);
 
-        var measurement = await MeasureAsync(options, async () =>
-        {
-            await action().ConfigureAwait(false);
-            return true;
-        }).ConfigureAwait(false);
+        await AssertAsync(
+            options,
+            async () =>
+            {
+                await action().ConfigureAwait(false);
+                return true;
+            },
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Runs <paramref name="action"/> inside a measurement scope, throws
+    /// <see cref="QueryBudgetExceededException"/> when the budget is exceeded, and otherwise
+    /// returns what the action produced.
+    /// </summary>
+    public async Task<T> AssertAsync<T>(
+        QueryBudgetOptions options,
+        Func<Task<T>> action,
+        CancellationToken cancellationToken = default)
+    {
+        var measurement = await MeasureAsync(options, action, cancellationToken)
+            .ConfigureAwait(false);
 
         if (!measurement.Result.Passed)
         {
@@ -53,6 +72,8 @@ public sealed class QueryBudgetRunner
                 measurement.Result,
                 _reportFormatter.Format(measurement.Result));
         }
+
+        return measurement.Value;
     }
 
     /// <summary>
@@ -61,12 +82,14 @@ public sealed class QueryBudgetRunner
     /// </summary>
     public async Task<QueryBudgetMeasurement<T>> MeasureAsync<T>(
         QueryBudgetOptions options,
-        Func<Task<T>> action)
+        Func<Task<T>> action,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(action);
+        cancellationToken.ThrowIfCancellationRequested();
 
-        using var handle = QueryBudgetContext.Begin(options);
+        using var scopeHandle = QueryBudgetContext.Begin(options);
         var scope = QueryBudgetContext.Current
             ?? throw new InvalidOperationException("Query budget scope was not established.");
 

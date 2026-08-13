@@ -93,8 +93,8 @@ public class QueryBudgetRunnerTests
             });
 
         throughRunner.Metrics.QueryCount.Should().Be(throughFacade.Metrics.QueryCount);
-        throughRunner.Metrics.ExactDuplicateCount
-            .Should().Be(throughFacade.Metrics.ExactDuplicateCount);
+        throughRunner.Metrics.RedundantExecutionCount
+            .Should().Be(throughFacade.Metrics.RedundantExecutionCount);
     }
 
     [Fact]

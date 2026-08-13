@@ -176,7 +176,7 @@ public sealed class InterceptorCaptureTests
 
         var query = measurement.Metrics.Queries.Should().ContainSingle().Subject;
         query.CommandId.Should().NotBe(Guid.Empty);
-        query.ConnectionId.Should().NotBeNullOrEmpty();
+        query.ConnectionId.Should().NotBe(Guid.Empty);
         query.Database.Should().NotBeNullOrEmpty();
         query.Duration.Should().BeGreaterThan(TimeSpan.Zero);
         query.Parameters.Should().NotBeEmpty();

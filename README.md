@@ -182,9 +182,21 @@ var measurement = await QueryBudget.MeasureAsync(async () =>
 });
 
 Console.WriteLine(measurement.Metrics.QueryCount);
-Console.WriteLine(measurement.Metrics.ExactDuplicateCount);
+Console.WriteLine(measurement.Metrics.RedundantExecutionCount);
 Console.WriteLine(measurement.Metrics.RepeatedPatternCount);
 Console.WriteLine(measurement.Metrics.TotalDuration);
+```
+
+### Assert and keep the result
+
+`AssertAsync` also comes in a form that returns what the action produced, so a budget can wrap a call
+without splitting it in two. Both forms take an optional `CancellationToken`.
+
+```csharp
+var orders = await QueryBudget.AssertAsync(
+    new QueryBudgetOptions { MaxQueries = 5 },
+    () => orderService.GetOrdersAsync(),
+    cancellationToken);
 ```
 
 ### HTTP endpoint test with WebApplicationFactory
@@ -327,7 +339,7 @@ carries meaning collapses too, so `LIMIT 10` and `LIMIT 20` become one pattern. 
 | Metric | Meaning |
 |---|---|
 | `QueryCount` | Commands attributed to the scope |
-| `ExactDuplicateCount` | Redundant exact read executions |
+| `RedundantExecutionCount` | Read executions that were not needed |
 | `RepeatedPatternCount` | Repeated read-pattern groups |
 | `MaximumPatternExecutions` | Executions in the largest repeated read pattern |
 | `SlowQueryCount` | Commands at or above the slow threshold |
@@ -345,7 +357,7 @@ twice. A `SaveChanges` over 50 new entities emits 50 executions of one `INSERT` 
 signature of an N+1, and not a defect.
 
 So writes and everything that is neither a read nor a write (session settings, transaction control,
-DDL) stay out of `ExactDuplicateCount` and `RepeatedPatternCount`. They are still detected and still
+DDL) stay out of `RedundantExecutionCount` and `RepeatedPatternCount`. They are still detected and still
 shown, under their own heading and never labelled a possible N+1:
 
 ```text

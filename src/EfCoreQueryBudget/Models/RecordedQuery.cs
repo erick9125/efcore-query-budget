@@ -14,7 +14,11 @@ public sealed record RecordedQuery
 
     public string? Database { get; init; }
 
-    public string? ConnectionId { get; init; }
+    /// <summary>
+    /// EF Core's id for the connection the command ran on. Kept as a <see cref="Guid"/> rather than
+    /// rendered: capture runs once per command and nothing reads this unless a report asks for it.
+    /// </summary>
+    public Guid ConnectionId { get; init; }
 
     /// <summary>
     /// EF Core's correlation id for this command execution. Used to discard a second capture of

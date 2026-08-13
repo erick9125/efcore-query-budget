@@ -1,0 +1,6 @@
+# Git normalises to LF in the repository and checks out whatever the platform uses, so line
+# endings never show up as a diff. .editorconfig stays out of it for the same reason.
+* text=auto
+
+*.png binary
+*.snk binary

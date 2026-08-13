@@ -1,0 +1,70 @@
+root = true
+
+[*]
+charset = utf-8
+insert_final_newline = true
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+[*.{cs,csproj,props,targets}]
+indent_size = 4
+
+[*.{json,yml,yaml,md}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.cs]
+# Namespaces
+csharp_style_namespace_declarations = file_scoped:warning
+
+# var
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = false:suggestion
+
+# Expression-bodied members
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+csharp_style_expression_bodied_properties = when_on_single_line:suggestion
+
+# Modifiers and braces
+dotnet_style_require_accessibility_modifiers = for_non_interface_members:warning
+csharp_prefer_braces = true:warning
+
+# Unused code is a defect, not a preference.
+dotnet_diagnostic.IDE0051.severity = warning
+dotnet_diagnostic.IDE0052.severity = warning
+
+# CA1848 wants LoggerMessage delegates; this library does not log.
+dotnet_diagnostic.CA1848.severity = none
+
+# CA1062 wants a null check on every public parameter. The public surface already guards with
+# ArgumentNullException.ThrowIfNull where it matters, and nullable reference types cover the rest.
+dotnet_diagnostic.CA1062.severity = suggestion
+
+# RS0026 objects to overloads carrying optional parameters. Every case here is a trailing
+# `CancellationToken cancellationToken = default`, which is the convention the whole BCL follows;
+# obeying the rule would mean doubling the overload count to say the same thing.
+dotnet_diagnostic.RS0026.severity = none
+
+# Tests and samples are not a published API, so the rules that exist to protect one do not apply.
+# Everything under src stays strict.
+[tests/**/*.cs]
+# Test names are sentences on purpose.
+dotnet_diagnostic.CA1707.severity = none
+# Nested helper types keep a test's fixtures next to the test that uses them.
+dotnet_diagnostic.CA1034.severity = none
+# Interface-typed fields in tests are the point: they prove the seam accepts a substitute.
+dotnet_diagnostic.CA1859.severity = none
+# xUnit disposes fixtures through IAsyncLifetime, which the analyzer does not recognise.
+dotnet_diagnostic.CA1001.severity = none
+# xUnit's own convention names collection definitions "...Collection".
+dotnet_diagnostic.CA1711.severity = none
+# CA1866 prefers StartsWith(char), which EF Core cannot translate to SQL inside a LINQ query.
+dotnet_diagnostic.CA1866.severity = none
+
+[samples/**/*.cs]
+# A minimal API sample declares its entities alongside the endpoints on purpose.
+dotnet_diagnostic.CA1050.severity = none
+dotnet_diagnostic.CA1859.severity = none

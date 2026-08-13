@@ -22,7 +22,13 @@ public sealed class PostgresFixture : IAsyncLifetime
     public async Task DisposeAsync() => await Container.DisposeAsync();
 }
 
-public sealed class AppFactory : WebApplicationFactory<Program>, IAsyncLifetime
+/// <remarks>
+/// Not an <c>IAsyncLifetime</c>: it is built by the test rather than registered as a fixture, so
+/// xUnit would never call it. Declaring the interface only made <c>InitializeAsync</c> look like it
+/// ran, and hiding the base <c>DisposeAsync</c> with <c>new</c> meant disposal depended on the
+/// static type of the reference.
+/// </remarks>
+public sealed class AppFactory : WebApplicationFactory<Program>
 {
     private readonly PostgresFixture _postgres;
 
@@ -30,10 +36,6 @@ public sealed class AppFactory : WebApplicationFactory<Program>, IAsyncLifetime
     {
         _postgres = postgres;
     }
-
-    public Task InitializeAsync() => Task.CompletedTask;
-
-    public new Task DisposeAsync() => base.DisposeAsync().AsTask();
 
     protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
     {

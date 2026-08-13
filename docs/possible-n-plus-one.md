@@ -48,7 +48,7 @@ executions of one `INSERT` shape with different values — indistinguishable fro
 alone, and a perfectly normal bulk insert.
 
 So writes, and commands that are neither (session settings, transaction control, DDL, sequence
-calls), are excluded from `ExactDuplicateCount` and `RepeatedPatternCount`. They are still grouped
+calls), are excluded from `RedundantExecutionCount` and `RepeatedPatternCount`. They are still grouped
 and still shown in the report, under a heading that does not claim they are a problem. The
 classification is on `QueryGroup.Operation`.
 

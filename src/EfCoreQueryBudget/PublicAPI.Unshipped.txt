@@ -1,0 +1,324 @@
+#nullable enable
+EfCoreQueryBudget.CountBudgetViolation
+EfCoreQueryBudget.CountBudgetViolation.Actual.get -> int
+EfCoreQueryBudget.CountBudgetViolation.Budget.get -> int
+EfCoreQueryBudget.CountBudgetViolation.CountBudgetViolation(EfCoreQueryBudget.QueryBudgetViolationType type, int budget, int actual) -> void
+EfCoreQueryBudget.CountBudgetViolation.Equals(EfCoreQueryBudget.CountBudgetViolation? other) -> bool
+EfCoreQueryBudget.DefaultQueryAnalysisFactory
+EfCoreQueryBudget.DefaultQueryAnalysisFactory.CreateFingerprinter(EfCoreQueryBudget.SqlNormalizationMode mode) -> EfCoreQueryBudget.IQueryFingerprinter!
+EfCoreQueryBudget.DefaultQueryAnalysisFactory.CreateNormalizer(EfCoreQueryBudget.SqlNormalizationMode mode) -> EfCoreQueryBudget.ISqlNormalizer!
+EfCoreQueryBudget.DefaultQueryAnalysisFactory.DefaultQueryAnalysisFactory() -> void
+EfCoreQueryBudget.DefaultQueryFingerprinter
+EfCoreQueryBudget.DefaultQueryFingerprinter.DefaultQueryFingerprinter(EfCoreQueryBudget.ISqlNormalizer! structuralNormalizer, EfCoreQueryBudget.ISqlNormalizer! exactNormalizer) -> void
+EfCoreQueryBudget.DefaultQueryFingerprinter.ExactFingerprint(EfCoreQueryBudget.RecordedQuery! query) -> string!
+EfCoreQueryBudget.DefaultQueryFingerprinter.StructuralFingerprint(EfCoreQueryBudget.RecordedQuery! query) -> string!
+EfCoreQueryBudget.DefaultQueryReportFormatter
+EfCoreQueryBudget.DefaultQueryReportFormatter.DefaultQueryReportFormatter() -> void
+EfCoreQueryBudget.DefaultQueryReportFormatter.Format(EfCoreQueryBudget.QueryBudgetResult! result) -> string!
+EfCoreQueryBudget.DefaultSqlNormalizer
+EfCoreQueryBudget.DefaultSqlNormalizer.DefaultSqlNormalizer(EfCoreQueryBudget.SqlNormalizationMode mode = EfCoreQueryBudget.SqlNormalizationMode.WhitespaceOnly) -> void
+EfCoreQueryBudget.DefaultSqlNormalizer.Normalize(string! sql) -> string!
+EfCoreQueryBudget.DurationBudgetViolation
+EfCoreQueryBudget.DurationBudgetViolation.Actual.get -> System.TimeSpan
+EfCoreQueryBudget.DurationBudgetViolation.Budget.get -> System.TimeSpan
+EfCoreQueryBudget.DurationBudgetViolation.DurationBudgetViolation(EfCoreQueryBudget.QueryBudgetViolationType type, System.TimeSpan budget, System.TimeSpan actual) -> void
+EfCoreQueryBudget.DurationBudgetViolation.Equals(EfCoreQueryBudget.DurationBudgetViolation? other) -> bool
+EfCoreQueryBudget.ExactDuplicateDetector
+EfCoreQueryBudget.ExactDuplicateDetector.Detect(System.Collections.Generic.IReadOnlyList<EfCoreQueryBudget.RecordedQuery!>! queries) -> System.Collections.Generic.IReadOnlyList<EfCoreQueryBudget.QueryGroup!>!
+EfCoreQueryBudget.ExactDuplicateDetector.ExactDuplicateDetector(EfCoreQueryBudget.ISqlNormalizer! normalizer, EfCoreQueryBudget.IQueryFingerprinter! fingerprinter) -> void
+EfCoreQueryBudget.IQueryAnalysisFactory
+EfCoreQueryBudget.IQueryAnalysisFactory.CreateFingerprinter(EfCoreQueryBudget.SqlNormalizationMode mode) -> EfCoreQueryBudget.IQueryFingerprinter!
+EfCoreQueryBudget.IQueryAnalysisFactory.CreateNormalizer(EfCoreQueryBudget.SqlNormalizationMode mode) -> EfCoreQueryBudget.ISqlNormalizer!
+EfCoreQueryBudget.IQueryFingerprinter
+EfCoreQueryBudget.IQueryFingerprinter.ExactFingerprint(EfCoreQueryBudget.RecordedQuery! query) -> string!
+EfCoreQueryBudget.IQueryFingerprinter.StructuralFingerprint(EfCoreQueryBudget.RecordedQuery! query) -> string!
+EfCoreQueryBudget.IQueryReportFormatter
+EfCoreQueryBudget.IQueryReportFormatter.Format(EfCoreQueryBudget.QueryBudgetResult! result) -> string!
+EfCoreQueryBudget.ISqlNormalizer
+EfCoreQueryBudget.ISqlNormalizer.Normalize(string! sql) -> string!
+EfCoreQueryBudget.ParameterSnapshot
+EfCoreQueryBudget.ParameterSnapshot.<Clone>$() -> EfCoreQueryBudget.ParameterSnapshot!
+EfCoreQueryBudget.ParameterSnapshot.ContentHash.get -> string?
+EfCoreQueryBudget.ParameterSnapshot.ContentHash.init -> void
+EfCoreQueryBudget.ParameterSnapshot.Equals(EfCoreQueryBudget.ParameterSnapshot? other) -> bool
+EfCoreQueryBudget.ParameterSnapshot.ParameterSnapshot() -> void
+EfCoreQueryBudget.ParameterSnapshot.Text.get -> string?
+EfCoreQueryBudget.ParameterSnapshot.Text.init -> void
+EfCoreQueryBudget.ParameterSnapshot.TypeName.get -> string!
+EfCoreQueryBudget.ParameterSnapshot.TypeName.init -> void
+EfCoreQueryBudget.QueryBudget
+EfCoreQueryBudget.QueryBudgetCommandInterceptor
+EfCoreQueryBudget.QueryBudgetCommandInterceptor.QueryBudgetCommandInterceptor() -> void
+EfCoreQueryBudget.QueryBudgetCommandInterceptor.QueryBudgetCommandInterceptor(Microsoft.Extensions.Options.IOptions<EfCoreQueryBudget.QueryBudgetLibraryOptions!>! options) -> void
+EfCoreQueryBudget.QueryBudgetContext
+EfCoreQueryBudget.QueryBudgetEvaluator
+EfCoreQueryBudget.QueryBudgetEvaluator.Evaluate(EfCoreQueryBudget.QueryMetrics! metrics) -> EfCoreQueryBudget.QueryBudgetResult!
+EfCoreQueryBudget.QueryBudgetEvaluator.QueryBudgetEvaluator() -> void
+EfCoreQueryBudget.QueryBudgetExceededException
+EfCoreQueryBudget.QueryBudgetExceededException.QueryBudgetExceededException(EfCoreQueryBudget.QueryBudgetResult! result, string! message) -> void
+EfCoreQueryBudget.QueryBudgetExceededException.Result.get -> EfCoreQueryBudget.QueryBudgetResult!
+EfCoreQueryBudget.QueryBudgetLibraryOptions
+EfCoreQueryBudget.QueryBudgetLibraryOptions.AttributionMode.get -> EfCoreQueryBudget.ScopeAttributionMode
+EfCoreQueryBudget.QueryBudgetLibraryOptions.AttributionMode.set -> void
+EfCoreQueryBudget.QueryBudgetLibraryOptions.Enabled.get -> bool
+EfCoreQueryBudget.QueryBudgetLibraryOptions.Enabled.set -> void
+EfCoreQueryBudget.QueryBudgetLibraryOptions.QueryBudgetLibraryOptions() -> void
+EfCoreQueryBudget.QueryBudgetMeasurement<T>
+EfCoreQueryBudget.QueryBudgetMeasurement<T>.<Clone>$() -> EfCoreQueryBudget.QueryBudgetMeasurement<T>!
+EfCoreQueryBudget.QueryBudgetMeasurement<T>.Equals(EfCoreQueryBudget.QueryBudgetMeasurement<T>? other) -> bool
+EfCoreQueryBudget.QueryBudgetMeasurement<T>.Metrics.get -> EfCoreQueryBudget.QueryMetrics!
+EfCoreQueryBudget.QueryBudgetMeasurement<T>.Metrics.init -> void
+EfCoreQueryBudget.QueryBudgetMeasurement<T>.QueryBudgetMeasurement() -> void
+EfCoreQueryBudget.QueryBudgetMeasurement<T>.Result.get -> EfCoreQueryBudget.QueryBudgetResult!
+EfCoreQueryBudget.QueryBudgetMeasurement<T>.Result.init -> void
+EfCoreQueryBudget.QueryBudgetMeasurement<T>.Value.get -> T
+EfCoreQueryBudget.QueryBudgetMeasurement<T>.Value.init -> void
+EfCoreQueryBudget.QueryBudgetOptions
+EfCoreQueryBudget.QueryBudgetOptions.<Clone>$() -> EfCoreQueryBudget.QueryBudgetOptions!
+EfCoreQueryBudget.QueryBudgetOptions.Equals(EfCoreQueryBudget.QueryBudgetOptions? other) -> bool
+EfCoreQueryBudget.QueryBudgetOptions.MaxExactDuplicates.get -> int?
+EfCoreQueryBudget.QueryBudgetOptions.MaxExactDuplicates.init -> void
+EfCoreQueryBudget.QueryBudgetOptions.MaxExecutionsPerPattern.get -> int?
+EfCoreQueryBudget.QueryBudgetOptions.MaxExecutionsPerPattern.init -> void
+EfCoreQueryBudget.QueryBudgetOptions.MaxQueries.get -> int?
+EfCoreQueryBudget.QueryBudgetOptions.MaxQueries.init -> void
+EfCoreQueryBudget.QueryBudgetOptions.MaxRecordedQueries.get -> int?
+EfCoreQueryBudget.QueryBudgetOptions.MaxRecordedQueries.init -> void
+EfCoreQueryBudget.QueryBudgetOptions.MaxRepeatedPatterns.get -> int?
+EfCoreQueryBudget.QueryBudgetOptions.MaxRepeatedPatterns.init -> void
+EfCoreQueryBudget.QueryBudgetOptions.MaxSingleQueryDuration.get -> System.TimeSpan?
+EfCoreQueryBudget.QueryBudgetOptions.MaxSingleQueryDuration.init -> void
+EfCoreQueryBudget.QueryBudgetOptions.MaxSlowQueries.get -> int?
+EfCoreQueryBudget.QueryBudgetOptions.MaxSlowQueries.init -> void
+EfCoreQueryBudget.QueryBudgetOptions.MaxTotalDuration.get -> System.TimeSpan?
+EfCoreQueryBudget.QueryBudgetOptions.MaxTotalDuration.init -> void
+EfCoreQueryBudget.QueryBudgetOptions.ParameterDisplayMode.get -> EfCoreQueryBudget.QueryParameterDisplayMode
+EfCoreQueryBudget.QueryBudgetOptions.ParameterDisplayMode.init -> void
+EfCoreQueryBudget.QueryBudgetOptions.QueryBudgetOptions() -> void
+EfCoreQueryBudget.QueryBudgetOptions.RepeatedPatternThreshold.get -> int
+EfCoreQueryBudget.QueryBudgetOptions.RepeatedPatternThreshold.init -> void
+EfCoreQueryBudget.QueryBudgetOptions.ScopeLabel.get -> string?
+EfCoreQueryBudget.QueryBudgetOptions.ScopeLabel.init -> void
+EfCoreQueryBudget.QueryBudgetOptions.SlowQueryThreshold.get -> System.TimeSpan
+EfCoreQueryBudget.QueryBudgetOptions.SlowQueryThreshold.init -> void
+EfCoreQueryBudget.QueryBudgetOptions.SqlNormalization.get -> EfCoreQueryBudget.SqlNormalizationMode
+EfCoreQueryBudget.QueryBudgetOptions.SqlNormalization.init -> void
+EfCoreQueryBudget.QueryBudgetResult
+EfCoreQueryBudget.QueryBudgetResult.<Clone>$() -> EfCoreQueryBudget.QueryBudgetResult!
+EfCoreQueryBudget.QueryBudgetResult.Budget.get -> EfCoreQueryBudget.QueryBudgetOptions!
+EfCoreQueryBudget.QueryBudgetResult.Equals(EfCoreQueryBudget.QueryBudgetResult? other) -> bool
+EfCoreQueryBudget.QueryBudgetResult.Metrics.get -> EfCoreQueryBudget.QueryMetrics!
+EfCoreQueryBudget.QueryBudgetResult.Metrics.init -> void
+EfCoreQueryBudget.QueryBudgetResult.Passed.get -> bool
+EfCoreQueryBudget.QueryBudgetResult.Passed.init -> void
+EfCoreQueryBudget.QueryBudgetResult.QueryBudgetResult() -> void
+EfCoreQueryBudget.QueryBudgetResult.Violations.get -> System.Collections.Generic.IReadOnlyList<EfCoreQueryBudget.QueryBudgetViolation!>!
+EfCoreQueryBudget.QueryBudgetResult.Violations.init -> void
+EfCoreQueryBudget.QueryBudgetRunner
+EfCoreQueryBudget.QueryBudgetRunner.AssertAsync(EfCoreQueryBudget.QueryBudgetOptions! options, System.Func<System.Threading.Tasks.Task!>! action, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+EfCoreQueryBudget.QueryBudgetRunner.AssertAsync<T>(EfCoreQueryBudget.QueryBudgetOptions! options, System.Func<System.Threading.Tasks.Task<T>!>! action, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<T>!
+EfCoreQueryBudget.QueryBudgetRunner.Format(EfCoreQueryBudget.QueryBudgetResult! result) -> string!
+EfCoreQueryBudget.QueryBudgetRunner.MeasureAsync<T>(EfCoreQueryBudget.QueryBudgetOptions! options, System.Func<System.Threading.Tasks.Task<T>!>! action, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<EfCoreQueryBudget.QueryBudgetMeasurement<T>!>!
+EfCoreQueryBudget.QueryBudgetRunner.QueryBudgetRunner() -> void
+EfCoreQueryBudget.QueryBudgetRunner.QueryBudgetRunner(EfCoreQueryBudget.IQueryAnalysisFactory! analysisFactory, EfCoreQueryBudget.IQueryReportFormatter! reportFormatter) -> void
+EfCoreQueryBudget.QueryBudgetViolation
+EfCoreQueryBudget.QueryBudgetViolation.QueryBudgetViolation(EfCoreQueryBudget.QueryBudgetViolation! original) -> void
+EfCoreQueryBudget.QueryBudgetViolation.Type.get -> EfCoreQueryBudget.QueryBudgetViolationType
+EfCoreQueryBudget.QueryBudgetViolationType
+EfCoreQueryBudget.QueryBudgetViolationType.ExactDuplicatesExceeded = 1 -> EfCoreQueryBudget.QueryBudgetViolationType
+EfCoreQueryBudget.QueryBudgetViolationType.PatternExecutionsExceeded = 3 -> EfCoreQueryBudget.QueryBudgetViolationType
+EfCoreQueryBudget.QueryBudgetViolationType.QueryCountExceeded = 0 -> EfCoreQueryBudget.QueryBudgetViolationType
+EfCoreQueryBudget.QueryBudgetViolationType.RepeatedPatternsExceeded = 2 -> EfCoreQueryBudget.QueryBudgetViolationType
+EfCoreQueryBudget.QueryBudgetViolationType.SingleQueryDurationExceeded = 6 -> EfCoreQueryBudget.QueryBudgetViolationType
+EfCoreQueryBudget.QueryBudgetViolationType.SlowQueriesExceeded = 4 -> EfCoreQueryBudget.QueryBudgetViolationType
+EfCoreQueryBudget.QueryBudgetViolationType.TotalDurationExceeded = 5 -> EfCoreQueryBudget.QueryBudgetViolationType
+EfCoreQueryBudget.QueryCaptureTotals
+EfCoreQueryBudget.QueryCaptureTotals.<Clone>$() -> EfCoreQueryBudget.QueryCaptureTotals!
+EfCoreQueryBudget.QueryCaptureTotals.DiscardedQueryCount.get -> int
+EfCoreQueryBudget.QueryCaptureTotals.DiscardedQueryCount.init -> void
+EfCoreQueryBudget.QueryCaptureTotals.Equals(EfCoreQueryBudget.QueryCaptureTotals? other) -> bool
+EfCoreQueryBudget.QueryCaptureTotals.ExecutionCount.get -> int
+EfCoreQueryBudget.QueryCaptureTotals.ExecutionCount.init -> void
+EfCoreQueryBudget.QueryCaptureTotals.MaximumDuration.get -> System.TimeSpan
+EfCoreQueryBudget.QueryCaptureTotals.MaximumDuration.init -> void
+EfCoreQueryBudget.QueryCaptureTotals.QueryCaptureTotals() -> void
+EfCoreQueryBudget.QueryCaptureTotals.SlowQueryCount.get -> int
+EfCoreQueryBudget.QueryCaptureTotals.SlowQueryCount.init -> void
+EfCoreQueryBudget.QueryCaptureTotals.TotalDuration.get -> System.TimeSpan
+EfCoreQueryBudget.QueryCaptureTotals.TotalDuration.init -> void
+EfCoreQueryBudget.QueryGroup
+EfCoreQueryBudget.QueryGroup.<Clone>$() -> EfCoreQueryBudget.QueryGroup!
+EfCoreQueryBudget.QueryGroup.DistinctVariantCount.get -> int
+EfCoreQueryBudget.QueryGroup.DistinctVariantCount.init -> void
+EfCoreQueryBudget.QueryGroup.Equals(EfCoreQueryBudget.QueryGroup? other) -> bool
+EfCoreQueryBudget.QueryGroup.ExecutionCount.get -> int
+EfCoreQueryBudget.QueryGroup.ExecutionCount.init -> void
+EfCoreQueryBudget.QueryGroup.Fingerprint.get -> string!
+EfCoreQueryBudget.QueryGroup.Fingerprint.init -> void
+EfCoreQueryBudget.QueryGroup.NormalizedSql.get -> string!
+EfCoreQueryBudget.QueryGroup.NormalizedSql.init -> void
+EfCoreQueryBudget.QueryGroup.Operation.get -> EfCoreQueryBudget.QueryOperation
+EfCoreQueryBudget.QueryGroup.Operation.init -> void
+EfCoreQueryBudget.QueryGroup.Queries.get -> System.Collections.Generic.IReadOnlyList<EfCoreQueryBudget.RecordedQuery!>!
+EfCoreQueryBudget.QueryGroup.Queries.init -> void
+EfCoreQueryBudget.QueryGroup.QueryGroup() -> void
+EfCoreQueryBudget.QueryMetrics
+EfCoreQueryBudget.QueryMetrics.<Clone>$() -> EfCoreQueryBudget.QueryMetrics!
+EfCoreQueryBudget.QueryMetrics.Budget.get -> EfCoreQueryBudget.QueryBudgetOptions!
+EfCoreQueryBudget.QueryMetrics.Budget.init -> void
+EfCoreQueryBudget.QueryMetrics.DiscardedQueryCount.get -> int
+EfCoreQueryBudget.QueryMetrics.DiscardedQueryCount.init -> void
+EfCoreQueryBudget.QueryMetrics.DuplicateCaptureCount.get -> int
+EfCoreQueryBudget.QueryMetrics.DuplicateCaptureCount.init -> void
+EfCoreQueryBudget.QueryMetrics.Equals(EfCoreQueryBudget.QueryMetrics? other) -> bool
+EfCoreQueryBudget.QueryMetrics.ExactDuplicateGroups.get -> System.Collections.Generic.IReadOnlyList<EfCoreQueryBudget.QueryGroup!>!
+EfCoreQueryBudget.QueryMetrics.ExactDuplicateGroups.init -> void
+EfCoreQueryBudget.QueryMetrics.MaximumDuration.get -> System.TimeSpan
+EfCoreQueryBudget.QueryMetrics.MaximumDuration.init -> void
+EfCoreQueryBudget.QueryMetrics.MaximumPatternExecutions.get -> int
+EfCoreQueryBudget.QueryMetrics.MaximumPatternExecutions.init -> void
+EfCoreQueryBudget.QueryMetrics.Queries.get -> System.Collections.Generic.IReadOnlyList<EfCoreQueryBudget.RecordedQuery!>!
+EfCoreQueryBudget.QueryMetrics.Queries.init -> void
+EfCoreQueryBudget.QueryMetrics.QueryCount.get -> int
+EfCoreQueryBudget.QueryMetrics.QueryCount.init -> void
+EfCoreQueryBudget.QueryMetrics.QueryMetrics() -> void
+EfCoreQueryBudget.QueryMetrics.RedundantExecutionCount.get -> int
+EfCoreQueryBudget.QueryMetrics.RedundantExecutionCount.init -> void
+EfCoreQueryBudget.QueryMetrics.RepeatedPatternCount.get -> int
+EfCoreQueryBudget.QueryMetrics.RepeatedPatternCount.init -> void
+EfCoreQueryBudget.QueryMetrics.RepeatedPatternGroups.get -> System.Collections.Generic.IReadOnlyList<EfCoreQueryBudget.QueryGroup!>!
+EfCoreQueryBudget.QueryMetrics.RepeatedPatternGroups.init -> void
+EfCoreQueryBudget.QueryMetrics.SlowQueryCount.get -> int
+EfCoreQueryBudget.QueryMetrics.SlowQueryCount.init -> void
+EfCoreQueryBudget.QueryMetrics.TotalDuration.get -> System.TimeSpan
+EfCoreQueryBudget.QueryMetrics.TotalDuration.init -> void
+EfCoreQueryBudget.QueryMetricsCalculator
+EfCoreQueryBudget.QueryMetricsCalculator.Calculate(System.Collections.Generic.IReadOnlyList<EfCoreQueryBudget.RecordedQuery!>! queries, EfCoreQueryBudget.QueryBudgetOptions? options = null, EfCoreQueryBudget.QueryCaptureTotals? totals = null) -> EfCoreQueryBudget.QueryMetrics!
+EfCoreQueryBudget.QueryMetricsCalculator.QueryMetricsCalculator() -> void
+EfCoreQueryBudget.QueryMetricsCalculator.QueryMetricsCalculator(EfCoreQueryBudget.IQueryAnalysisFactory! analysis) -> void
+EfCoreQueryBudget.QueryOperation
+EfCoreQueryBudget.QueryOperation.Other = 2 -> EfCoreQueryBudget.QueryOperation
+EfCoreQueryBudget.QueryOperation.Read = 0 -> EfCoreQueryBudget.QueryOperation
+EfCoreQueryBudget.QueryOperation.Write = 1 -> EfCoreQueryBudget.QueryOperation
+EfCoreQueryBudget.QueryParameterDisplayMode
+EfCoreQueryBudget.QueryParameterDisplayMode.Full = 2 -> EfCoreQueryBudget.QueryParameterDisplayMode
+EfCoreQueryBudget.QueryParameterDisplayMode.Hidden = 0 -> EfCoreQueryBudget.QueryParameterDisplayMode
+EfCoreQueryBudget.QueryParameterDisplayMode.TypesOnly = 1 -> EfCoreQueryBudget.QueryParameterDisplayMode
+EfCoreQueryBudget.QueryScope
+EfCoreQueryBudget.QueryScope.DuplicateCaptureCount.get -> int
+EfCoreQueryBudget.QueryScope.QueryScope() -> void
+EfCoreQueryBudget.QueryScope.QueryScope(EfCoreQueryBudget.QueryBudgetOptions! options) -> void
+EfCoreQueryBudget.QueryScope.Record(EfCoreQueryBudget.RecordedQuery! query) -> void
+EfCoreQueryBudget.QueryScope.Snapshot() -> System.Collections.Generic.IReadOnlyList<EfCoreQueryBudget.RecordedQuery!>!
+EfCoreQueryBudget.QueryScope.Totals.get -> EfCoreQueryBudget.QueryCaptureTotals!
+EfCoreQueryBudget.RecordedQuery
+EfCoreQueryBudget.RecordedQuery.<Clone>$() -> EfCoreQueryBudget.RecordedQuery!
+EfCoreQueryBudget.RecordedQuery.CommandId.get -> System.Guid
+EfCoreQueryBudget.RecordedQuery.CommandId.init -> void
+EfCoreQueryBudget.RecordedQuery.CommandText.get -> string!
+EfCoreQueryBudget.RecordedQuery.CommandText.init -> void
+EfCoreQueryBudget.RecordedQuery.ConnectionId.get -> System.Guid
+EfCoreQueryBudget.RecordedQuery.ConnectionId.init -> void
+EfCoreQueryBudget.RecordedQuery.Database.get -> string?
+EfCoreQueryBudget.RecordedQuery.Database.init -> void
+EfCoreQueryBudget.RecordedQuery.Duration.get -> System.TimeSpan
+EfCoreQueryBudget.RecordedQuery.Duration.init -> void
+EfCoreQueryBudget.RecordedQuery.Equals(EfCoreQueryBudget.RecordedQuery? other) -> bool
+EfCoreQueryBudget.RecordedQuery.Parameters.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+EfCoreQueryBudget.RecordedQuery.Parameters.init -> void
+EfCoreQueryBudget.RecordedQuery.RecordedQuery() -> void
+EfCoreQueryBudget.RecordedQuery.Timestamp.get -> System.DateTimeOffset
+EfCoreQueryBudget.RecordedQuery.Timestamp.init -> void
+EfCoreQueryBudget.RepeatedPatternDetector
+EfCoreQueryBudget.RepeatedPatternDetector.Detect(System.Collections.Generic.IReadOnlyList<EfCoreQueryBudget.RecordedQuery!>! queries, int threshold = 5) -> System.Collections.Generic.IReadOnlyList<EfCoreQueryBudget.QueryGroup!>!
+EfCoreQueryBudget.RepeatedPatternDetector.RepeatedPatternDetector(EfCoreQueryBudget.ISqlNormalizer! normalizer, EfCoreQueryBudget.IQueryFingerprinter! fingerprinter) -> void
+EfCoreQueryBudget.ScopeAttributionMode
+EfCoreQueryBudget.ScopeAttributionMode.AsyncLocalOnly = 0 -> EfCoreQueryBudget.ScopeAttributionMode
+EfCoreQueryBudget.ScopeAttributionMode.SingleActiveScopeFallback = 1 -> EfCoreQueryBudget.ScopeAttributionMode
+EfCoreQueryBudget.ServiceCollectionExtensions
+EfCoreQueryBudget.SqlNormalizationMode
+EfCoreQueryBudget.SqlNormalizationMode.MaskLiterals = 1 -> EfCoreQueryBudget.SqlNormalizationMode
+EfCoreQueryBudget.SqlNormalizationMode.WhitespaceOnly = 0 -> EfCoreQueryBudget.SqlNormalizationMode
+abstract EfCoreQueryBudget.QueryBudgetViolation.<Clone>$() -> EfCoreQueryBudget.QueryBudgetViolation!
+override EfCoreQueryBudget.CountBudgetViolation.<Clone>$() -> EfCoreQueryBudget.CountBudgetViolation!
+override EfCoreQueryBudget.CountBudgetViolation.Equals(object? obj) -> bool
+override EfCoreQueryBudget.CountBudgetViolation.GetHashCode() -> int
+override EfCoreQueryBudget.CountBudgetViolation.ToString() -> string!
+override EfCoreQueryBudget.DurationBudgetViolation.<Clone>$() -> EfCoreQueryBudget.DurationBudgetViolation!
+override EfCoreQueryBudget.DurationBudgetViolation.Equals(object? obj) -> bool
+override EfCoreQueryBudget.DurationBudgetViolation.GetHashCode() -> int
+override EfCoreQueryBudget.DurationBudgetViolation.ToString() -> string!
+override EfCoreQueryBudget.ParameterSnapshot.Equals(object? obj) -> bool
+override EfCoreQueryBudget.ParameterSnapshot.GetHashCode() -> int
+override EfCoreQueryBudget.ParameterSnapshot.ToString() -> string!
+override EfCoreQueryBudget.QueryBudgetCommandInterceptor.CommandFailed(System.Data.Common.DbCommand! command, Microsoft.EntityFrameworkCore.Diagnostics.CommandErrorEventData! eventData) -> void
+override EfCoreQueryBudget.QueryBudgetCommandInterceptor.CommandFailedAsync(System.Data.Common.DbCommand! command, Microsoft.EntityFrameworkCore.Diagnostics.CommandErrorEventData! eventData, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+override EfCoreQueryBudget.QueryBudgetCommandInterceptor.NonQueryExecuted(System.Data.Common.DbCommand! command, Microsoft.EntityFrameworkCore.Diagnostics.CommandExecutedEventData! eventData, int result) -> int
+override EfCoreQueryBudget.QueryBudgetCommandInterceptor.NonQueryExecutedAsync(System.Data.Common.DbCommand! command, Microsoft.EntityFrameworkCore.Diagnostics.CommandExecutedEventData! eventData, int result, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<int>
+override EfCoreQueryBudget.QueryBudgetCommandInterceptor.ReaderExecuted(System.Data.Common.DbCommand! command, Microsoft.EntityFrameworkCore.Diagnostics.CommandExecutedEventData! eventData, System.Data.Common.DbDataReader! result) -> System.Data.Common.DbDataReader!
+override EfCoreQueryBudget.QueryBudgetCommandInterceptor.ReaderExecutedAsync(System.Data.Common.DbCommand! command, Microsoft.EntityFrameworkCore.Diagnostics.CommandExecutedEventData! eventData, System.Data.Common.DbDataReader! result, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Data.Common.DbDataReader!>
+override EfCoreQueryBudget.QueryBudgetCommandInterceptor.ScalarExecuted(System.Data.Common.DbCommand! command, Microsoft.EntityFrameworkCore.Diagnostics.CommandExecutedEventData! eventData, object? result) -> object?
+override EfCoreQueryBudget.QueryBudgetCommandInterceptor.ScalarExecutedAsync(System.Data.Common.DbCommand! command, Microsoft.EntityFrameworkCore.Diagnostics.CommandExecutedEventData! eventData, object? result, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<object?>
+override EfCoreQueryBudget.QueryBudgetMeasurement<T>.Equals(object? obj) -> bool
+override EfCoreQueryBudget.QueryBudgetMeasurement<T>.GetHashCode() -> int
+override EfCoreQueryBudget.QueryBudgetMeasurement<T>.ToString() -> string!
+override EfCoreQueryBudget.QueryBudgetOptions.Equals(object? obj) -> bool
+override EfCoreQueryBudget.QueryBudgetOptions.GetHashCode() -> int
+override EfCoreQueryBudget.QueryBudgetOptions.ToString() -> string!
+override EfCoreQueryBudget.QueryBudgetResult.Equals(object? obj) -> bool
+override EfCoreQueryBudget.QueryBudgetResult.GetHashCode() -> int
+override EfCoreQueryBudget.QueryBudgetResult.ToString() -> string!
+override EfCoreQueryBudget.QueryBudgetViolation.Equals(object? obj) -> bool
+override EfCoreQueryBudget.QueryBudgetViolation.GetHashCode() -> int
+override EfCoreQueryBudget.QueryBudgetViolation.ToString() -> string!
+override EfCoreQueryBudget.QueryCaptureTotals.Equals(object? obj) -> bool
+override EfCoreQueryBudget.QueryCaptureTotals.GetHashCode() -> int
+override EfCoreQueryBudget.QueryCaptureTotals.ToString() -> string!
+override EfCoreQueryBudget.QueryGroup.Equals(object? obj) -> bool
+override EfCoreQueryBudget.QueryGroup.GetHashCode() -> int
+override EfCoreQueryBudget.QueryGroup.ToString() -> string!
+override EfCoreQueryBudget.QueryMetrics.Equals(object? obj) -> bool
+override EfCoreQueryBudget.QueryMetrics.GetHashCode() -> int
+override EfCoreQueryBudget.QueryMetrics.ToString() -> string!
+override EfCoreQueryBudget.RecordedQuery.Equals(object? obj) -> bool
+override EfCoreQueryBudget.RecordedQuery.GetHashCode() -> int
+override EfCoreQueryBudget.RecordedQuery.ToString() -> string!
+override sealed EfCoreQueryBudget.CountBudgetViolation.Equals(EfCoreQueryBudget.QueryBudgetViolation? other) -> bool
+override sealed EfCoreQueryBudget.DurationBudgetViolation.Equals(EfCoreQueryBudget.QueryBudgetViolation? other) -> bool
+static EfCoreQueryBudget.CountBudgetViolation.operator !=(EfCoreQueryBudget.CountBudgetViolation? left, EfCoreQueryBudget.CountBudgetViolation? right) -> bool
+static EfCoreQueryBudget.CountBudgetViolation.operator ==(EfCoreQueryBudget.CountBudgetViolation? left, EfCoreQueryBudget.CountBudgetViolation? right) -> bool
+static EfCoreQueryBudget.DurationBudgetViolation.operator !=(EfCoreQueryBudget.DurationBudgetViolation? left, EfCoreQueryBudget.DurationBudgetViolation? right) -> bool
+static EfCoreQueryBudget.DurationBudgetViolation.operator ==(EfCoreQueryBudget.DurationBudgetViolation? left, EfCoreQueryBudget.DurationBudgetViolation? right) -> bool
+static EfCoreQueryBudget.ParameterSnapshot.operator !=(EfCoreQueryBudget.ParameterSnapshot? left, EfCoreQueryBudget.ParameterSnapshot? right) -> bool
+static EfCoreQueryBudget.ParameterSnapshot.operator ==(EfCoreQueryBudget.ParameterSnapshot? left, EfCoreQueryBudget.ParameterSnapshot? right) -> bool
+static EfCoreQueryBudget.QueryBudget.AssertAsync(EfCoreQueryBudget.QueryBudgetOptions! options, System.Func<System.Threading.Tasks.Task!>! action, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+static EfCoreQueryBudget.QueryBudget.AssertAsync<T>(EfCoreQueryBudget.QueryBudgetOptions! options, System.Func<System.Threading.Tasks.Task<T>!>! action, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<T>!
+static EfCoreQueryBudget.QueryBudget.MeasureAsync(System.Func<System.Threading.Tasks.Task!>! action, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<EfCoreQueryBudget.QueryBudgetMeasurement<object?>!>!
+static EfCoreQueryBudget.QueryBudget.MeasureAsync<T>(EfCoreQueryBudget.QueryBudgetOptions! options, System.Func<System.Threading.Tasks.Task<T>!>! action, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<EfCoreQueryBudget.QueryBudgetMeasurement<T>!>!
+static EfCoreQueryBudget.QueryBudget.MeasureAsync<T>(System.Func<System.Threading.Tasks.Task<T>!>! action, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<EfCoreQueryBudget.QueryBudgetMeasurement<T>!>!
+static EfCoreQueryBudget.QueryBudgetContext.Begin() -> System.IDisposable!
+static EfCoreQueryBudget.QueryBudgetContext.Begin(EfCoreQueryBudget.QueryBudgetOptions! options) -> System.IDisposable!
+static EfCoreQueryBudget.QueryBudgetContext.Current.get -> EfCoreQueryBudget.QueryScope?
+static EfCoreQueryBudget.QueryBudgetContext.HasActiveScope.get -> bool
+static EfCoreQueryBudget.QueryBudgetContext.TryGetScope(EfCoreQueryBudget.ScopeAttributionMode mode, out EfCoreQueryBudget.QueryScope! scope) -> bool
+static EfCoreQueryBudget.QueryBudgetContext.TryGetScope(out EfCoreQueryBudget.QueryScope! scope) -> bool
+static EfCoreQueryBudget.QueryBudgetMeasurement<T>.operator !=(EfCoreQueryBudget.QueryBudgetMeasurement<T>? left, EfCoreQueryBudget.QueryBudgetMeasurement<T>? right) -> bool
+static EfCoreQueryBudget.QueryBudgetMeasurement<T>.operator ==(EfCoreQueryBudget.QueryBudgetMeasurement<T>? left, EfCoreQueryBudget.QueryBudgetMeasurement<T>? right) -> bool
+static EfCoreQueryBudget.QueryBudgetOptions.operator !=(EfCoreQueryBudget.QueryBudgetOptions? left, EfCoreQueryBudget.QueryBudgetOptions? right) -> bool
+static EfCoreQueryBudget.QueryBudgetOptions.operator ==(EfCoreQueryBudget.QueryBudgetOptions? left, EfCoreQueryBudget.QueryBudgetOptions? right) -> bool
+static EfCoreQueryBudget.QueryBudgetResult.operator !=(EfCoreQueryBudget.QueryBudgetResult? left, EfCoreQueryBudget.QueryBudgetResult? right) -> bool
+static EfCoreQueryBudget.QueryBudgetResult.operator ==(EfCoreQueryBudget.QueryBudgetResult? left, EfCoreQueryBudget.QueryBudgetResult? right) -> bool
+static EfCoreQueryBudget.QueryBudgetViolation.operator !=(EfCoreQueryBudget.QueryBudgetViolation? left, EfCoreQueryBudget.QueryBudgetViolation? right) -> bool
+static EfCoreQueryBudget.QueryBudgetViolation.operator ==(EfCoreQueryBudget.QueryBudgetViolation? left, EfCoreQueryBudget.QueryBudgetViolation? right) -> bool
+static EfCoreQueryBudget.QueryCaptureTotals.operator !=(EfCoreQueryBudget.QueryCaptureTotals? left, EfCoreQueryBudget.QueryCaptureTotals? right) -> bool
+static EfCoreQueryBudget.QueryCaptureTotals.operator ==(EfCoreQueryBudget.QueryCaptureTotals? left, EfCoreQueryBudget.QueryCaptureTotals? right) -> bool
+static EfCoreQueryBudget.QueryGroup.operator !=(EfCoreQueryBudget.QueryGroup? left, EfCoreQueryBudget.QueryGroup? right) -> bool
+static EfCoreQueryBudget.QueryGroup.operator ==(EfCoreQueryBudget.QueryGroup? left, EfCoreQueryBudget.QueryGroup? right) -> bool
+static EfCoreQueryBudget.QueryMetrics.operator !=(EfCoreQueryBudget.QueryMetrics? left, EfCoreQueryBudget.QueryMetrics? right) -> bool
+static EfCoreQueryBudget.QueryMetrics.operator ==(EfCoreQueryBudget.QueryMetrics? left, EfCoreQueryBudget.QueryMetrics? right) -> bool
+static EfCoreQueryBudget.RecordedQuery.operator !=(EfCoreQueryBudget.RecordedQuery? left, EfCoreQueryBudget.RecordedQuery? right) -> bool
+static EfCoreQueryBudget.RecordedQuery.operator ==(EfCoreQueryBudget.RecordedQuery? left, EfCoreQueryBudget.RecordedQuery? right) -> bool
+static EfCoreQueryBudget.ServiceCollectionExtensions.AddEfCoreQueryBudget(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<EfCoreQueryBudget.QueryBudgetLibraryOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+virtual EfCoreQueryBudget.QueryBudgetViolation.EqualityContract.get -> System.Type!
+virtual EfCoreQueryBudget.QueryBudgetViolation.Equals(EfCoreQueryBudget.QueryBudgetViolation? other) -> bool
+virtual EfCoreQueryBudget.QueryBudgetViolation.PrintMembers(System.Text.StringBuilder! builder) -> bool
