@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO.Hashing;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -46,9 +47,14 @@ public sealed class DefaultQueryFingerprinter : IQueryFingerprinter
         return Hash(payload);
     }
 
+    /// <summary>
+    /// Groups queries; it is not a security boundary, so it uses a fast non-cryptographic hash
+    /// rather than SHA-256 and a 64-character hex string per query. The content hash in
+    /// <c>ParameterCapture</c> stays on SHA-256, where it stands in for a value that is never shown.
+    /// </summary>
     private static string Hash(string value)
     {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(value));
+        var bytes = XxHash128.Hash(Encoding.UTF8.GetBytes(value));
         return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 }
@@ -105,6 +111,9 @@ internal static class ParameterNormalizer
                 ["name"] = e.ToString(),
                 ["value"] = Convert.ToInt64(e, CultureInfo.InvariantCulture)
             },
+            // Invariant where the type allows it: a culture-sensitive ToString would give the same
+            // value a different fingerprint on a machine with a different locale.
+            IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
             _ => value.ToString()
         };
     }

@@ -7,60 +7,61 @@ public sealed class DefaultQueryReportFormatter : IQueryReportFormatter
 {
     private const int MaxGroupsPerSection = 3;
     private const int MaxSqlLength = 300;
+    private const int MaxParameterLength = 256;
 
     public string Format(QueryBudgetResult result)
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        var lines = new StringBuilder();
-        lines.AppendLine(result.Passed
+        var report = new StringBuilder();
+        report.AppendLine(result.Passed
             ? "EF Core query budget met"
             : "EF Core query budget exceeded");
 
         if (!string.IsNullOrWhiteSpace(result.Budget.ScopeLabel))
         {
-            lines.AppendLine($"Scope: {result.Budget.ScopeLabel}");
+            report.AppendLine(CultureInfo.InvariantCulture, $"Scope: {result.Budget.ScopeLabel}");
         }
 
-        lines.AppendLine();
+        report.AppendLine();
 
         if (result.Metrics.DuplicateCaptureCount > 0)
         {
-            lines.AppendLine(
+            report.AppendLine(
                 $"Discarded {result.Metrics.DuplicateCaptureCount} duplicate capture(s) of the same command execution. "
                 + "The interceptor is attached to the DbContext more than once — check for a repeated AddInterceptors "
                 + "registration, for example a test host that re-registers AddDbContext on top of the application's own.");
-            lines.AppendLine();
+            report.AppendLine();
         }
 
         if (result.Metrics.DiscardedQueryCount > 0)
         {
-            lines.AppendLine(
+            report.AppendLine(
                 $"{result.Metrics.DiscardedQueryCount} query(s) ran but were not retained: the scope reached "
                 + "MaxRecordedQueries. Counts and durations above cover every command; the duplicate and "
                 + "pattern groups below cover the retained ones only. Raise MaxRecordedQueries, or set it to "
                 + "null, to analyze them all.");
-            lines.AppendLine();
+            report.AppendLine();
         }
 
         foreach (var violation in result.Violations)
         {
             var (budget, actual) = FormatValues(violation);
-            lines.AppendLine(Label(violation.Type));
-            lines.AppendLine($"  Budget: <= {budget}");
-            lines.AppendLine($"  Actual:   {actual}");
-            lines.AppendLine();
+            report.AppendLine(Label(violation.Type));
+            report.AppendLine(CultureInfo.InvariantCulture, $"  Budget: <= {budget}");
+            report.AppendLine(CultureInfo.InvariantCulture, $"  Actual:   {actual}");
+            report.AppendLine();
         }
 
         AppendGroups(
-            lines,
+            report,
             "Repeated query pattern",
             Reads(result.Metrics.RepeatedPatternGroups),
             possibleNPlusOne: true,
             result.Budget.ParameterDisplayMode);
 
         AppendGroups(
-            lines,
+            report,
             "Repeated exact query",
             Reads(result.Metrics.ExactDuplicateGroups),
             possibleNPlusOne: false,
@@ -69,14 +70,14 @@ public sealed class DefaultQueryReportFormatter : IQueryReportFormatter
         // Writes are shown but never called an N+1: a bulk insert has the same shape as one and is
         // not a defect. They do not count against the budget either.
         AppendGroups(
-            lines,
+            report,
             "Repeated write (not counted against the budget)",
             NonReads(result.Metrics.RepeatedPatternGroups),
             possibleNPlusOne: false,
             result.Budget.ParameterDisplayMode);
 
         AppendGroups(
-            lines,
+            report,
             "Repeated exact write (not counted against the budget)",
             NonReads(result.Metrics.ExactDuplicateGroups),
             possibleNPlusOne: false,
@@ -84,11 +85,11 @@ public sealed class DefaultQueryReportFormatter : IQueryReportFormatter
 
         if (result.Budget.ParameterDisplayMode == QueryParameterDisplayMode.Hidden)
         {
-            lines.AppendLine(
+            report.AppendLine(
                 "Parameter values are hidden. Set ParameterDisplayMode to TypesOnly or Full to show them (they may contain tokens or personal data).");
         }
 
-        return lines.ToString().TrimEnd();
+        return report.ToString().TrimEnd();
     }
 
     private static QueryGroup[] Reads(IReadOnlyList<QueryGroup> groups)
@@ -98,43 +99,43 @@ public sealed class DefaultQueryReportFormatter : IQueryReportFormatter
         => groups.Where(g => g.Operation != QueryOperation.Read).ToArray();
 
     private static void AppendGroups(
-        StringBuilder lines,
+        StringBuilder report,
         string title,
-        IReadOnlyList<QueryGroup> groups,
+        QueryGroup[] groups,
         bool possibleNPlusOne,
         QueryParameterDisplayMode displayMode)
     {
-        if (groups.Count == 0)
+        if (groups.Length == 0)
         {
             return;
         }
 
         foreach (var group in groups.Take(MaxGroupsPerSection))
         {
-            lines.AppendLine(title);
-            lines.AppendLine(Truncate(group.NormalizedSql, MaxSqlLength));
-            lines.AppendLine($"Executions: {group.ExecutionCount}");
-            lines.AppendLine($"Distinct variants: {group.DistinctVariantCount}");
+            report.AppendLine(title);
+            report.AppendLine(Truncate(group.NormalizedSql, MaxSqlLength));
+            report.AppendLine(CultureInfo.InvariantCulture, $"Executions: {group.ExecutionCount}");
+            report.AppendLine(CultureInfo.InvariantCulture, $"Distinct variants: {group.DistinctVariantCount}");
 
             if (possibleNPlusOne && group.DistinctVariantCount > 1)
             {
-                lines.AppendLine();
-                lines.AppendLine("Possible N+1 query pattern.");
+                report.AppendLine();
+                report.AppendLine("Possible N+1 query pattern.");
             }
 
             if (displayMode != QueryParameterDisplayMode.Hidden && group.Queries.Count > 0)
             {
-                lines.AppendLine($"Sample parameters: {FormatParameters(group.Queries[0].Parameters, displayMode)}");
+                report.AppendLine(CultureInfo.InvariantCulture, $"Sample parameters: {FormatParameters(group.Queries[0].Parameters, displayMode)}");
             }
 
-            lines.AppendLine();
+            report.AppendLine();
         }
 
-        var hidden = groups.Count - MaxGroupsPerSection;
+        var hidden = groups.Length - MaxGroupsPerSection;
         if (hidden > 0)
         {
-            lines.AppendLine($"... and {hidden} more group{(hidden == 1 ? string.Empty : "s")}");
-            lines.AppendLine();
+            report.AppendLine(CultureInfo.InvariantCulture, $"... and {hidden} more group{(hidden == 1 ? string.Empty : "s")}");
+            report.AppendLine();
         }
     }
 
@@ -219,13 +220,24 @@ public sealed class DefaultQueryReportFormatter : IQueryReportFormatter
             // A snapshot with no text is one that must never be printed, such as a binary payload.
             ParameterSnapshot snapshot => snapshot.Text ?? $"{snapshot.TypeName}#redacted",
             byte[] bytes => $"byte[{bytes.Length}]#redacted",
-            string s => $"\"{s}\"",
-            _ => Convert.ToString(value, CultureInfo.InvariantCulture) ?? value.GetType().Name
+            // Bounded here too: a query built by hand rather than captured never went through
+            // ParameterCapture, and would otherwise dump its whole value into the message.
+            string s => $"\"{Truncate(s, MaxParameterLength)}\"",
+            _ => Truncate(
+                Convert.ToString(value, CultureInfo.InvariantCulture) ?? value.GetType().Name,
+                MaxParameterLength)
         };
     }
 
     private static string Truncate(string value, int maximum)
     {
-        return value.Length <= maximum ? value : $"{value[..maximum]}...";
+        if (value.Length <= maximum)
+        {
+            return value;
+        }
+
+        // Never cut between a surrogate pair, which would leave an unpaired code unit in the report.
+        var length = char.IsHighSurrogate(value[maximum - 1]) ? maximum - 1 : maximum;
+        return $"{value[..length]}...";
     }
 }

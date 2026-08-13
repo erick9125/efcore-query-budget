@@ -38,8 +38,6 @@ public sealed class QueryScope
         _slowQueryThreshold = options.SlowQueryThreshold;
     }
 
-    public string Id { get; } = Guid.NewGuid().ToString("N");
-
     /// <summary>
     /// How many command executions arrived more than once and were discarded. Anything above zero
     /// means the interceptor is attached to the <c>DbContext</c> more than once; every metric

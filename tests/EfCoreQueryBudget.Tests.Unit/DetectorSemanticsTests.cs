@@ -41,7 +41,7 @@ public class DetectorSemanticsTests
     {
         var writes = Repeat("UPDATE counters SET n = n + 1 WHERE id = @p", 6, ("@p", 1));
 
-        Calculate(writes).ExactDuplicateCount.Should().Be(0);
+        Calculate(writes).RedundantExecutionCount.Should().Be(0);
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public class DetectorSemanticsTests
     {
         var reads = Repeat("SELECT n FROM counters WHERE id = @p", 6, ("@p", 1));
 
-        Calculate(reads).ExactDuplicateCount.Should().Be(5);
+        Calculate(reads).RedundantExecutionCount.Should().Be(5);
     }
 
     [Fact]

@@ -16,10 +16,12 @@ public sealed record QueryMetrics
     public int QueryCount { get; init; }
 
     /// <summary>
-    /// Redundant executions of a read: the same SQL with the same parameter values, returning rows
-    /// the caller already had. Writes are excluded — repeating one is not redundant by itself.
+    /// Executions of a read that were not needed: the same SQL with the same parameter values,
+    /// returning rows the caller already had. It counts executions past the first in each group —
+    /// six identical reads are five redundant ones — not how many groups repeated. Writes are
+    /// excluded, since repeating one is not redundant by itself.
     /// </summary>
-    public int ExactDuplicateCount { get; init; }
+    public int RedundantExecutionCount { get; init; }
 
     /// <summary>
     /// How many read patterns repeated. Answers "how many places", not "how big" — see

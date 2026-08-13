@@ -4,6 +4,13 @@
 
 ### Added
 
+- `AssertAsync<T>` returns what the action produced, so a budget can wrap a call without splitting
+  it in two, and every `AssertAsync`/`MeasureAsync` takes an optional `CancellationToken`.
+- Analyzers and API tracking: `.editorconfig`, `EnableNETAnalyzers` with `latest-recommended`,
+  `EnforceCodeStyleInBuild`, and `Microsoft.CodeAnalysis.PublicApiAnalyzers` with
+  `PublicAPI.Shipped.txt`/`Unshipped.txt`, so a change to the public surface shows up as a diff in
+  the pull request. Package versions move to Central Package Management in
+  `Directory.Packages.props`, still pinned per target framework.
 - `QueryBudgetRunner`, an instantiable composition root, and `IQueryAnalysisFactory`. The three
   abstractions the library declares — `ISqlNormalizer`, `IQueryFingerprinter` and
   `IQueryReportFormatter` — existed as interfaces but there was no way to supply your own through
@@ -35,6 +42,12 @@
 
 ### Fixed
 
+- The report no longer formats numbers according to the machine's locale. It was built with
+  interpolated strings, so a scope label or an execution count could come out with a comma decimal
+  separator depending on where the tests ran.
+- A parameter value rendered in `Full` mode is bounded and no longer splits a surrogate pair, and an
+  unknown parameter type is fingerprinted through its invariant representation where it has one.
+  Captured values were already bounded; these paths are reached by queries built by hand.
 - Metrics can no longer be scored against a budget that did not produce them. `Calculate` and
   `Evaluate` each took their own `QueryBudgetOptions`, so `result.Budget` could report one budget
   while the numbers were computed under another — the slow-query threshold, the repeat threshold and
@@ -69,6 +82,16 @@
 
 ### Breaking
 
+- `QueryMetrics.ExactDuplicateCount` is now `RedundantExecutionCount`. The number was never a count
+  of duplicates: it is executions past the first in each group, so six identical reads reported five.
+  `QueryBudgetOptions.MaxExactDuplicates` keeps its name, since it names the limit and not the metric.
+- `RecordedQuery.ConnectionId` is a `Guid` instead of a `string`, which also drops a `ToString` per
+  captured command. `QueryScope.Id` is gone: nothing read it once scope propagation was solved with
+  `PreserveExecutionContext`.
+- Removed the `AssertAsync(action, options)` overload, which took the same two arguments as
+  `AssertAsync(options, action)` in the opposite order.
+- Fingerprints are shorter: grouping uses `XxHash128` rather than SHA-256, since it identifies a
+  query rather than protecting anything. The content hash in captured parameters stays on SHA-256.
 - `QueryBudgetViolation` is abstract, with `CountBudgetViolation` and `DurationBudgetViolation`
   carrying `int` and `TimeSpan` instead of two boxed `object`s. Reading `Actual` or `Budget` now
   means matching the kind first, which is what the type system can check and a boxed value could

@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace EfCoreQueryBudget;
 
 /// <summary>
@@ -10,6 +12,11 @@ public sealed class QueryBudgetEvaluator
     /// from here rather than as a second argument is what stops metrics from being scored against a
     /// budget that did not produce them.
     /// </param>
+    [SuppressMessage(
+        "Performance",
+        "CA1822:Mark members as static",
+        Justification = "An instance method on purpose: the evaluator is a collaborator the runner "
+            + "holds and a future release may need to replace. Making it static would freeze that.")]
     public QueryBudgetResult Evaluate(QueryMetrics metrics)
     {
         ArgumentNullException.ThrowIfNull(metrics);
@@ -40,7 +47,7 @@ public sealed class QueryBudgetEvaluator
 
         Count(
             budget.MaxExactDuplicates,
-            metrics.ExactDuplicateCount,
+            metrics.RedundantExecutionCount,
             QueryBudgetViolationType.ExactDuplicatesExceeded);
 
         Count(

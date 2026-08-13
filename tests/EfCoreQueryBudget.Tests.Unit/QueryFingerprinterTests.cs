@@ -44,7 +44,10 @@ public class QueryFingerprinterTests
         var query = Query("UPDATE blobs SET data = @data", ("@data", new byte[] { 1, 2, 3 }));
         var fingerprint = _fingerprinter.ExactFingerprint(query);
         fingerprint.Should().NotContain("AQID");
-        fingerprint.Should().HaveLength(64);
+
+        // XxHash128 rendered as hex. The point of the test is that the payload is not embedded,
+        // not which hash produces the digest.
+        fingerprint.Should().HaveLength(32);
     }
 
     private static RecordedQuery Query(

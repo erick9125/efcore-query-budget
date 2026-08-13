@@ -8,6 +8,11 @@ namespace EfCoreQueryBudget;
 /// Captures EF Core database commands into the active <see cref="QueryBudgetContext"/> scope.
 /// When no scope is active, returns immediately with negligible overhead.
 /// </summary>
+/// <remarks>
+/// Only the <c>*Executed</c> and <c>CommandFailed</c> callbacks are overridden. Capture needs the
+/// duration, which does not exist until the command has finished, so there is nothing to do on the
+/// way in.
+/// </remarks>
 public sealed class QueryBudgetCommandInterceptor : DbCommandInterceptor
 {
     private readonly IOptions<QueryBudgetLibraryOptions>? _options;
@@ -19,23 +24,6 @@ public sealed class QueryBudgetCommandInterceptor : DbCommandInterceptor
     public QueryBudgetCommandInterceptor(IOptions<QueryBudgetLibraryOptions> options)
     {
         _options = options;
-    }
-
-    public override InterceptionResult<DbDataReader> ReaderExecuting(
-        DbCommand command,
-        CommandEventData eventData,
-        InterceptionResult<DbDataReader> result)
-    {
-        return result;
-    }
-
-    public override ValueTask<InterceptionResult<DbDataReader>> ReaderExecutingAsync(
-        DbCommand command,
-        CommandEventData eventData,
-        InterceptionResult<DbDataReader> result,
-        CancellationToken cancellationToken = default)
-    {
-        return new ValueTask<InterceptionResult<DbDataReader>>(result);
     }
 
     public override DbDataReader ReaderExecuted(
@@ -57,23 +45,6 @@ public sealed class QueryBudgetCommandInterceptor : DbCommandInterceptor
         return new ValueTask<DbDataReader>(result);
     }
 
-    public override InterceptionResult<object> ScalarExecuting(
-        DbCommand command,
-        CommandEventData eventData,
-        InterceptionResult<object> result)
-    {
-        return result;
-    }
-
-    public override ValueTask<InterceptionResult<object>> ScalarExecutingAsync(
-        DbCommand command,
-        CommandEventData eventData,
-        InterceptionResult<object> result,
-        CancellationToken cancellationToken = default)
-    {
-        return new ValueTask<InterceptionResult<object>>(result);
-    }
-
     public override object? ScalarExecuted(
         DbCommand command,
         CommandExecutedEventData eventData,
@@ -91,23 +62,6 @@ public sealed class QueryBudgetCommandInterceptor : DbCommandInterceptor
     {
         TryRecord(command, eventData);
         return new ValueTask<object?>(result);
-    }
-
-    public override InterceptionResult<int> NonQueryExecuting(
-        DbCommand command,
-        CommandEventData eventData,
-        InterceptionResult<int> result)
-    {
-        return result;
-    }
-
-    public override ValueTask<InterceptionResult<int>> NonQueryExecutingAsync(
-        DbCommand command,
-        CommandEventData eventData,
-        InterceptionResult<int> result,
-        CancellationToken cancellationToken = default)
-    {
-        return new ValueTask<InterceptionResult<int>>(result);
     }
 
     public override int NonQueryExecuted(
@@ -191,7 +145,7 @@ public sealed class QueryBudgetCommandInterceptor : DbCommandInterceptor
             command,
             duration,
             connection?.Database,
-            connectionId.ToString(),
+            connectionId,
             commandId));
     }
 
@@ -199,7 +153,7 @@ public sealed class QueryBudgetCommandInterceptor : DbCommandInterceptor
         DbCommand command,
         TimeSpan duration,
         string? database,
-        string? connectionId,
+        Guid connectionId,
         Guid commandId)
     {
         // Projected now rather than held by reference: the value belongs to the caller and may be

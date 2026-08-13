@@ -29,7 +29,7 @@ public class QueryMetricsCalculatorTests
         // six different queries however the pattern side normalizes.
         var metrics = new QueryMetricsCalculator().Calculate(queries, Masking);
 
-        metrics.ExactDuplicateCount.Should().Be(0);
+        metrics.RedundantExecutionCount.Should().Be(0);
         metrics.ExactDuplicateGroups.Should().BeEmpty();
     }
 
